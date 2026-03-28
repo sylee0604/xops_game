@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>XOPS-like FPS</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #4a5060; overflow: hidden; font-family: 'Courier New', monospace; }
+canvas { display: block; }
+
+#overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.92);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    color: #fff; z-index: 100;
+}
+#overlay h1 { font-size: 3.5em; color: #f90; letter-spacing: 8px; margin-bottom: 6px; text-shadow: 0 0 20px #f90; }
+#overlay .subtitle { color: #888; margin-bottom: 30px; font-size: 0.9em; letter-spacing: 3px; }
+.controls-grid { display: grid; grid-template-columns: auto auto; gap: 6px 30px; margin-bottom: 30px; color: #aaa; font-size: 0.85em; }
+.key { color: #f90; }
+#start-btn {
+    padding: 14px 50px; background: transparent; color: #f90;
+    border: 2px solid #f90; font-size: 1.1em; cursor: pointer;
+    font-family: inherit; letter-spacing: 4px;
+    transition: all 0.2s;
+}
+#start-btn:hover { opacity: 0.75; }
+#train-btn {
+    padding: 10px 36px; background: transparent; color: #4af;
+    border: 2px solid #4af; font-size: 0.95em; cursor: pointer;
+    font-family: inherit; letter-spacing: 3px; margin-top: 10px;
+    transition: all 0.2s;
+}
+#train-btn:hover { background: #4af; color: #000; }
+
+#hud { position: fixed; inset: 0; pointer-events: none; z-index: 10; }
+
+/* Crosshair */
+#crosshair {
+    position: fixed; top: 50%; left: 50%;
+    pointer-events: none; z-index: 11;
+    transform: translate(-50%, -50%);
+}
+.ch-line {
+    position: absolute;
+    background: rgba(255,255,255,0.85);
+    transition: all 0.05s;
+}
+.ch-top, .ch-bottom { width: 2px; left: 50%; transform: translateX(-50%); }
+.ch-left, .ch-right { height: 2px; top: 50%; transform: translateY(-50%); }
+.ch-top { bottom: calc(50% + 6px); height: 10px; }
+.ch-bottom { top: calc(50% + 6px); height: 10px; }
+.ch-left { right: calc(50% + 6px); width: 10px; }
+.ch-right { left: calc(50% + 6px); width: 10px; }
+.ch-dot { width: 2px; height: 2px; background: rgba(255,255,255,0.6); position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); border-radius: 50%; }
+
+/* Health */
+#health-container {
+    position: fixed; bottom: 30px; left: 30px;
+}
+#health-label { color: #888; font-size: 11px; letter-spacing: 2px; margin-bottom: 5px; }
+#health-bg { width: 180px; height: 10px; background: #222; border: 1px solid #444; }
+#health-fill { height: 100%; background: linear-gradient(90deg, #c22, #e44); width: 100%; transition: width 0.15s; }
+
+/* Ammo */
+#ammo-container {
+    position: fixed; bottom: 30px; right: 30px;
+    text-align: right;
+    background: rgba(180,180,180,0.35);
+    border-radius: 8px;
+    padding: 10px 16px 10px 20px;
+}
+#weapon-name { color: #111; font-size: 2em; letter-spacing: 3px; margin-bottom: 4px; }
+#ammo-display { display: flex; align-items: baseline; justify-content: flex-end; gap: 4px; }
+#ammo-current { color: #111; font-size: 2.5em; line-height: 1; }
+#ammo-sep { color: #222; font-size: 1.5em; }
+#ammo-reserve { color: #111; font-size: 1.2em; font-weight: bold; }
+#reload-bar-bg { width: 120px; height: 3px; background: #222; margin-top: 6px; margin-left: auto; display: none; }
+#reload-bar-fill { height: 100%; background: #f90; width: 0%; transition: width linear; }
+
+/* Kill counter */
+#kill-counter {
+    position: fixed; top: 20px; right: 20px;
+    color: #f90; font-size: 0.9em; letter-spacing: 2px;
+}
+
+/* Scope overlay */
+#scope-canvas {
+    position: fixed; inset: 0; pointer-events: none;
+    z-index: 13; display: none;
+    width: 100%; height: 100%;
+}
+
+/* Message */
+#message {
+    position: fixed; top: 38%; left: 50%;
+    transform: translateX(-50%);
+    color: #ff0; font-size: 1.4em; letter-spacing: 4px;
+    text-shadow: 0 0 15px #ff0;
+    opacity: 0; transition: opacity 0.3s;
+    pointer-events: none; white-space: nowrap;
+}
+
+/* State indicator */
+#state-bar {
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+    color: #888; font-size: 0.75em; letter-spacing: 3px;
+}
+#state-bar.stealth { color: #4af; }
+
+/* Minimap */
+#minimap-container {
+    position: fixed; top: 20px; left: 20px;
+    border: 1px solid #333;
+    background: rgba(0,0,0,0.6);
+}
+#minimap-canvas { display: block; }
+
+/* Damage vignette */
+#vignette {
+    position: fixed; inset: 0;
+    background: radial-gradient(ellipse at center, transparent 50%, rgba(255,0,0,0) 100%);
+    pointer-events: none; z-index: 9;
+    transition: background 0.3s;
+}
+
+/* Weapon model area */
+#weapon-model {
+    position: fixed; bottom: 0; right: 60px;
+    width: 200px; height: 120px;
+    pointer-events: none;
+}
+
+/* Compass */
+#compass {
+    position: fixed; top: 20px; left: 50%;
+    transform: translateX(-50%);
+    color: #666; font-size: 0.7em; letter-spacing: 2px;
+}
+</style>
+</head>
+<body>
+
+<div id="overlay">
+    <h1>X-OPS</h1>
+    <div class="subtitle">TACTICAL FIRST PERSON SHOOTER</div>
+    <div class="controls-grid">
+        <span><span class="key">WASD</span> 이동</span>
+        <span><span class="key">마우스</span> 조준</span>
+        <span><span class="key">클릭</span> 사격</span>
+        <span><span class="key">R</span> 재장전</span>
+        <span><span class="key">1~8</span> 무기 교체</span>
+        <span><span class="key">Shift</span> 앉기 (이동 시 스텔스)</span>
+        <span><span class="key">Space</span> 점프</span>
+        <span><span class="key">G</span> 무기 버리기</span>
+        <span><span class="key">F</span> 적 ON/OFF</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;align-items:center">
+        <button id="start-btn" onclick="startGame('combat')">&#9654;  MISSION 1 — COMPOUND</button>
+        <button id="start-btn" style="border-color:#4af;color:#4af" onclick="startGame('harbor')">&#9654;  MISSION 2 — HARBOR</button>
+        <button id="start-btn" style="border-color:#f44;color:#f44" onclick="startGame('tunnel')">&#9654;  MISSION 3 — TUNNEL</button>
+        <button id="train-btn" onclick="startGame('training')">&#9654;  TRAINING RANGE</button>
+    </div>
+</div>
+
+<div id="hud" style="display:none">
+    <div id="health-container">
+        <div id="health-label">HEALTH</div>
+        <div id="health-bg"><div id="health-fill"></div></div>
+    </div>
+
+    <div id="ammo-container">
+        <div id="weapon-name">PISTOL</div>
+        <div id="ammo-display">
+            <span id="ammo-current">12</span>
+            <span id="ammo-sep">/</span>
+            <span id="ammo-reserve">60</span>
+        </div>
+        <div id="reload-bar-bg"><div id="reload-bar-fill"></div></div>
+    </div>
+
+    <div id="kill-counter">KILLS: 0 / 10</div>
+    <div id="message"></div>
+    <div id="state-bar">NORMAL</div>
+    <div id="vignette"></div>
+
+    <canvas id="minimap-canvas" width="130" height="130" style="display:none;position:fixed;top:20px;left:20px;background:rgba(0,0,0,0.6);border:1px solid #333;"></canvas>
+</div>
+
+<canvas id="scope-canvas"></canvas>
+
+<div id="crosshair">
+    <div class="ch-line ch-top"></div>
+    <div class="ch-line ch-bottom"></div>
+    <div class="ch-line ch-left"></div>
+    <div class="ch-line ch-right"></div>
+    <div class="ch-dot"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+<script src="js/constants.js"></script>
+<script src="js/state.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/physics.js"></script>
+<script src="js/pickups.js"></script>
+<script src="js/enemies.js"></script>
+<script src="js/bullets.js"></script>
+<script src="js/weapons.js"></script>
+<script src="js/hud.js"></script>
+<script src="js/player.js"></script>
+<script src="js/maps/combat.js"></script>
+<script src="js/maps/harbor.js"></script>
+<script src="js/maps/tunnel.js"></script>
+<script src="js/maps/training.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>
