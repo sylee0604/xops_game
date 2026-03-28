@@ -18,7 +18,7 @@ const _bHeadC  = new THREE.Vector3();
 const _bBodyC  = new THREE.Vector3();
 const _bNearC  = new THREE.Vector3();
 
-function spawnBullet(origin, dir, damage, isPlayer, speed) {
+function spawnBullet(origin, dir, damage, isPlayer, speed, isAlly = false) {
     // Bullet limit: prevent unbounded growth
     if (bullets.length > 60) return;
 
@@ -31,7 +31,7 @@ function spawnBullet(origin, dir, damage, isPlayer, speed) {
     tracer.quaternion.setFromUnitVectors(new THREE.Vector3(0,0,-1), dir.clone().normalize());
     scene.add(tracer);
 
-    bullets.push({ mesh, tracer, pos: origin.clone(), prevPos: origin.clone(), dir: dir.clone().normalize(), speed, damage, isPlayer, life: 30 });
+    bullets.push({ mesh, tracer, pos: origin.clone(), prevPos: origin.clone(), dir: dir.clone().normalize(), speed, damage, isPlayer, isAlly, life: 30 });
 }
 
 function updateBullets(dt) {
@@ -65,12 +65,12 @@ function updateBullets(dt) {
                     _bHeadC.set(e.pos.x, 1.52, e.pos.z);
                     _bBodyC.set(e.pos.x, 0.88, e.pos.z);
                     if (segmentHitsSphere(b.prevPos, b.pos, _bHeadC, 0.22)) {
-                        hitEnemy(e, b.damage * 2);
+                        hitEnemy(e, b.damage * 2, b.isAlly);
                         spawnImpact(b.pos, 0xff3300);
-                        showMessage('HEADSHOT!');
+                        if (!b.isAlly) showMessage('HEADSHOT!');
                         remove = true; break;
                     } else if (segmentHitsSphere(b.prevPos, b.pos, _bBodyC, 0.46)) {
-                        hitEnemy(e, b.damage);
+                        hitEnemy(e, b.damage, b.isAlly);
                         spawnImpact(b.pos, 0xffaa00);
                         remove = true; break;
                     }

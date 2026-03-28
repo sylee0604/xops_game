@@ -172,6 +172,7 @@ function spawnEnemies() {
             peekTimer: Math.random() * 0.3,
             reactDelay: 0,
             shootCount: 0,
+            attackTarget: null,
             isZombie: false,
             baseY: 0,
         });
@@ -292,6 +293,7 @@ function spawnEnemyAt(x, z, wpList, isZombie, floorY = 0) {
         peekTimer: Math.random() * 0.3,
         reactDelay: 0,
         shootCount: 0,
+        attackTarget: null,
         isZombie,
     });
 }
@@ -301,16 +303,52 @@ function updateEnemies(dt) {
         if (e.state === STATE.DEAD) continue;
 
         const sees = canSeePlayer(e);
-        // distanceSq for range comparisons (avoid sqrt where possible)
-        const dx0 = e.pos.x - player.pos.x;
-        const dz0 = e.pos.z - player.pos.z;
+
+        // ── 아군 시야 체크 (플레이어를 못 볼 때만) ──
+        let visibleAlly = null;
+        if (!sees && allies.length > 0) {
+            _eyePos.set(e.pos.x, 1.45, e.pos.z);
+            for (const ally of allies) {
+                if (ally.state === STATE.DEAD) continue;
+                const ax = ally.pos.x - e.pos.x, az = ally.pos.z - e.pos.z;
+                const adist = Math.sqrt(ax*ax + az*az);
+                if (adist > e.sightRange) continue;
+                _toPlayer.set(ax / adist, 0, az / adist);
+                _fwd.set(-Math.sin(e.facing), 0, -Math.cos(e.facing));
+                if (_fwd.dot(_toPlayer) < FOV_COS && adist > 3) continue;
+                _rayDir.copy(_toPlayer);
+                _ray.set(_eyePos, _rayDir);
+                const hits = _ray.intersectObjects(wallMeshList);
+                if (hits.length === 0 || hits[0].distance > adist - 0.3) {
+                    visibleAlly = ally; break;
+                }
+            }
+        }
+
+        // 현재 유효 타겟 (플레이어 우선)
+        const effectiveTarget = sees ? player.pos
+            : (e.attackTarget && e.attackTarget.state !== STATE.DEAD ? e.attackTarget.pos : player.pos);
+
+        const dx0 = e.pos.x - effectiveTarget.x;
+        const dz0 = e.pos.z - effectiveTarget.z;
         const distSq = dx0*dx0 + dz0*dz0;
-        const dist = Math.sqrt(distSq); // needed for movement math
+        const dist = Math.sqrt(distSq);
 
         // --- State machine ---
         if (sees) {
+            e.attackTarget = null; // 플레이어 타겟
             e.lastKnownPlayer = player.pos.clone();
             e.alertTimer = 10;
+            if (e.state !== STATE.ATTACK) {
+                e.state = STATE.ATTACK;
+                e.strafeTimer = 0;
+                e.reactDelay = 0.75;
+                e.shootCount = 0;
+            }
+        } else if (visibleAlly) {
+            e.attackTarget = visibleAlly;
+            e.lastKnownPlayer = visibleAlly.pos.clone();
+            e.alertTimer = 8;
             if (e.state !== STATE.ATTACK) {
                 e.state = STATE.ATTACK;
                 e.strafeTimer = 0;
@@ -338,8 +376,11 @@ function updateEnemies(dt) {
                 if (e.state === STATE.PATROL) e.state = STATE.ALERT;
             } else {
                 e.state = STATE.PATROL;
+                e.attackTarget = null;
             }
         }
+
+        const seesTarget = sees || (visibleAlly !== null);
 
         // --- Movement ---
         let target = null;
@@ -352,8 +393,7 @@ function updateEnemies(dt) {
         } else if (e.state === STATE.ALERT) {
             target = e.lastKnownPlayer;
         } else if (e.state === STATE.ATTACK) {
-            target = e.lastKnownPlayer || player.pos;
-            if (sees) e.lastKnownPlayer = player.pos.clone();
+            target = e.lastKnownPlayer || effectiveTarget;
 
             // 인지 딜레이 차감
             if (e.reactDelay > 0) e.reactDelay -= dt;
@@ -373,7 +413,7 @@ function updateEnemies(dt) {
                 } else {
                     e.shootTimer = 0;
                 }
-            } else if (sees) {
+            } else if (seesTarget) {
                 // Peek-and-Shoot
                 e.peekTimer -= dt;
                 if (e.peekTimer <= 0) {
@@ -395,7 +435,7 @@ function updateEnemies(dt) {
                     e.pos.z -= right.z * e.speed * 0.9 * dt;
                 }
 
-                // 거리 유지 (use distSq for comparisons)
+                // 거리 유지
                 if (distSq < 5*5)       moveSpeed = -e.speed * 0.5;
                 else if (distSq > 20*20) moveSpeed =  e.speed * 0.7;
                 else                     moveSpeed = 0;
@@ -435,15 +475,21 @@ function updateEnemies(dt) {
 }
 
 function enemyShoot(e) {
-    const dist = e.pos.distanceTo(player.pos);
+    // 타겟: 아군이 있으면 아군, 없으면 플레이어
+    const tpos = (e.attackTarget && e.attackTarget.state !== STATE.DEAD)
+        ? e.attackTarget.pos : player.pos;
+    // 아군은 pos.y=0 → 가슴 높이 0.9, 플레이어는 pos.y=PLAYER_HEIGHT → -0.5
+    const aimY = (e.attackTarget && e.attackTarget.state !== STATE.DEAD)
+        ? 0.9 : (tpos.y - 0.5);
+    const dist = e.pos.distanceTo(tpos);
     const spread = 0.07 + dist * 0.0025;
 
     function _fire() {
         if (e.state === STATE.DEAD) return;
         const tgt = new THREE.Vector3(
-            player.pos.x + (Math.random()-0.5) * spread * 5,
-            (player.pos.y - 0.5) + (Math.random()-0.5) * spread * 3,
-            player.pos.z + (Math.random()-0.5) * spread * 5
+            tpos.x + (Math.random()-0.5) * spread * 5,
+            aimY    + (Math.random()-0.5) * spread * 3,
+            tpos.z + (Math.random()-0.5) * spread * 5
         );
         const origin = new THREE.Vector3(e.pos.x, e.baseY + 1.50, e.pos.z);
         const dir = new THREE.Vector3().subVectors(tgt, origin).normalize();
@@ -684,7 +730,7 @@ function updateAllies(dt) {
     }
 }
 
-function hitEnemy(e, damage) {
+function hitEnemy(e, damage, fromAlly = false) {
     if (e.state === STATE.DEAD) return;
     e.health -= damage;
     // Flash
@@ -708,10 +754,10 @@ function hitEnemy(e, damage) {
         e.peekTimer = 0;
     }
 
-    if (e.health <= 0) killEnemy(e);
+    if (e.health <= 0) killEnemy(e, fromAlly);
 }
 
-function killEnemy(e) {
+function killEnemy(e, fromAlly = false) {
     e.state = STATE.DEAD;
     kills++;
     e.mesh.rotation.z = Math.PI / 2;
@@ -720,7 +766,7 @@ function killEnemy(e) {
         if (c.material) c.material.color.set(0x111111);
     });
     document.getElementById('kill-counter').textContent = `KILLS: ${kills} / ${TOTAL_ENEMIES}`;
-    showMessage('ENEMY DOWN');
+    if (!fromAlly) showMessage('ENEMY DOWN');
 
     // Dead enemy cleanup after 3s
     setTimeout(() => {

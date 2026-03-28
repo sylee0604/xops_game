@@ -84,21 +84,22 @@ function buildAssaultMap() {
         addPlatform(cx - totalW/2, cx + totalW/2, cz - BD, cz + BD, totalH);
     }
 
+    // stackH=7 → 높이 7×0.24=1.68m (서면 머리만 노출)
     // Left cluster
-    addSandbagWall(5.5,  35, 5, 3);
-    addSandbagWall(5.5,  40, 4, 2);
+    addSandbagWall(5.5,  35, 6, 7);
+    addSandbagWall(5.5,  40, 5, 7);
     // Center-left
-    addSandbagWall(13.5, 37, 5, 3);
-    addSandbagWall(13.5, 42, 4, 4);
-    // Center (two walls with gap)
-    addSandbagWall(19.5, 33, 3, 4);
-    addSandbagWall(19.5, 44, 3, 4);
+    addSandbagWall(13.5, 37, 6, 7);
+    addSandbagWall(13.5, 42, 5, 7);
+    // Center
+    addSandbagWall(19.5, 33, 4, 7);
+    addSandbagWall(19.5, 44, 4, 7);
     // Center-right
-    addSandbagWall(25.5, 37, 5, 3);
-    addSandbagWall(25.5, 42, 4, 4);
+    addSandbagWall(25.5, 37, 6, 7);
+    addSandbagWall(25.5, 42, 5, 7);
     // Right cluster
-    addSandbagWall(33.5, 35, 5, 3);
-    addSandbagWall(33.5, 40, 4, 2);
+    addSandbagWall(33.5, 35, 6, 7);
+    addSandbagWall(33.5, 40, 5, 7);
 
     // Scattered rocks for visual texture
     const rockMat = new THREE.MeshLambertMaterial({ color: 0x8a7560 });
