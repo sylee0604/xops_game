@@ -84,7 +84,7 @@ const WEAPON_DEFS = [
         ammo: 30,  reserve: 120, maxAmmo: 30,
         damage: 33, fireRate: 0.095, recoil: 0.014, spread: 0.038,
         bulletSpeed: 195, auto: true,  reloadTime: 1.8,
-        shotVar: [0.91,  7000,  40, 1.1],
+        shotVar: [1.00,  7500,  50, 1.1],
         viewPos: [0.48, -0.24, -0.34],
         viewRot: [0.08,  0.30, -0.04],
     },
@@ -105,7 +105,7 @@ const WEAPON_DEFS = [
         ammo: 5,   reserve: 20,  maxAmmo: 5,
         damage: 115, fireRate: 1.4, recoil: 0.056, spread: 0.001,
         bulletSpeed: 300, auto: false, reloadTime: 2.5, adsFov: 12,
-        shotVar: [0.86,  7500,  50, 1.2],  // AWP — 낮고 깊되 너무 낮지 않게
+        shotVar: [0.95,  8500,  55, 1.2],  // AWP — 낮고 깊되 너무 낮지 않게
         viewPos: [0.44, -0.22, -0.38],
         viewRot: [0.06,  0.28, -0.03],
     },
@@ -135,7 +135,7 @@ const WEAPON_DEFS = [
         ammo: 8,   reserve: 32,  maxAmmo: 8,
         damage: 28, pellets: 7, fireRate: 0.75, recoil: 0.06, spread: 0.14,
         bulletSpeed: 120, auto: false, reloadTime: 2.0, adsFov: 60,
-        shotVar: [0.80,  6000,  40, 1.3],  // SPAS-12 — 두껍되 적당한 높이
+        shotVar: [0.91,  7000,  50, 1.3],  // SPAS-12 — 두껍되 적당한 높이
         viewPos: [0.50, -0.24, -0.32],
         viewRot: [0.09,  0.31, -0.04],
     },

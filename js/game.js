@@ -48,9 +48,19 @@ function gameLoop() {
     renderer.clear();
     renderer.render(scene, camera);
     renderer.clearDepth();
-    renderer.render(weaponScene, weaponCamera);
+    const _skipWeaponRender = keys['mouse2'] && !player.adsLocked
+        && (player.currentWeapon === 3 || player.currentWeapon === 4)
+        && !player.weapons[player.currentWeapon].dropped
+        && !player.weapons[player.currentWeapon].reloading;
+    if (!_skipWeaponRender) renderer.render(weaponScene, weaponCamera);
 }
 
+
+function _resetToKnife() {
+    player.weapons.forEach((w, i) => { if (i !== 2) { w.ammo = 0; w.reserve = 0; w.dropped = true; } });
+    player.carrySlots = [null, null];
+    player.currentWeapon = 2;
+}
 
 function startGame(mapType) {
     currentMap = mapType || 'combat';
@@ -73,15 +83,7 @@ function startGame(mapType) {
         buildHarborMap();
         spawnHarborEnemies();
         spawnHarborPickups();
-        for (let i = 0; i < player.weapons.length; i++) {
-            if (i !== 2) {
-                player.weapons[i].ammo = 0;
-                player.weapons[i].reserve = 0;
-                player.weapons[i].dropped = true;
-            }
-        }
-        player.carrySlots = [null, null];
-        player.currentWeapon = 2; // knife
+        _resetToKnife();
         player.pos.set(28, PLAYER_HEIGHT, 1.5);
         player.yaw = Math.PI;
         showMessage('MISSION 2 — HARBOR  ▶ 항구를 장악하라', 2500);
@@ -90,15 +92,7 @@ function startGame(mapType) {
         spawnAssaultEnemies();
         spawnAssaultAllies();
         spawnAssaultPickups();
-        for (let i = 0; i < player.weapons.length; i++) {
-            if (i !== 2) {
-                player.weapons[i].ammo = 0;
-                player.weapons[i].reserve = 0;
-                player.weapons[i].dropped = true;
-            }
-        }
-        player.carrySlots = [null, null];
-        player.currentWeapon = 2; // knife
+        _resetToKnife();
         player.pos.set(19.5, PLAYER_HEIGHT, 2);
         player.yaw = Math.PI;
         showMessage('MISSION 4 — ASSAULT  ▶ 아군과 함께 적을 섬멸하라', 2500);
@@ -115,16 +109,7 @@ function startGame(mapType) {
         buildLighting();
         spawnEnemies();
         spawnPickups();
-        // compound: 칼만 지급, 나머지는 전부 빈 상태
-        for (let i = 0; i < player.weapons.length; i++) {
-            if (i !== 2) {
-                player.weapons[i].ammo = 0;
-                player.weapons[i].reserve = 0;
-                player.weapons[i].dropped = true;
-            }
-        }
-        player.carrySlots = [null, null];
-        player.currentWeapon = 2; // knife
+        _resetToKnife();
         player.pos.set(CELL * 1.5, PLAYER_HEIGHT, CELL * 1.5);
         player.yaw = Math.PI;
         showMessage('MISSION 1 — COMPOUND  ▶ 적을 모두 제거하라', 2500);

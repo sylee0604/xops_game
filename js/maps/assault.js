@@ -85,21 +85,19 @@ function buildAssaultMap() {
     }
 
     // stackH=7 → 높이 7×0.24=1.68m (서면 머리만 노출)
-    // Left cluster
-    addSandbagWall(5.5,  35, 6, 7);
-    addSandbagWall(5.5,  40, 5, 7);
-    // Center-left
-    addSandbagWall(13.5, 37, 6, 7);
-    addSandbagWall(13.5, 42, 5, 7);
-    // Center
-    addSandbagWall(19.5, 33, 4, 7);
-    addSandbagWall(19.5, 44, 4, 7);
-    // Center-right
-    addSandbagWall(25.5, 37, 6, 7);
-    addSandbagWall(25.5, 42, 5, 7);
-    // Right cluster
-    addSandbagWall(33.5, 35, 6, 7);
-    addSandbagWall(33.5, 40, 5, 7);
+    // ── 아군쪽 엄폐물 (z ≈ 24–25) ──
+    addSandbagWall(5.5,  24, 6, 7);
+    addSandbagWall(13.5, 25, 6, 7);
+    addSandbagWall(19.5, 24, 4, 7);
+    addSandbagWall(25.5, 25, 6, 7);
+    addSandbagWall(33.5, 24, 6, 7);
+
+    // ── 적군쪽 엄폐물 (z ≈ 56–57) ──
+    addSandbagWall(5.5,  57, 6, 7);
+    addSandbagWall(13.5, 56, 6, 7);
+    addSandbagWall(19.5, 57, 4, 7);
+    addSandbagWall(25.5, 56, 6, 7);
+    addSandbagWall(33.5, 57, 6, 7);
 
     // Scattered rocks for visual texture
     const rockMat = new THREE.MeshLambertMaterial({ color: 0x8a7560 });
@@ -120,18 +118,41 @@ function buildAssaultMap() {
 }
 
 function spawnAssaultEnemies() {
-    // 12 enemies spread across far end (z = 65–73)
+    // 갭 x 중심: 모래주머니 벽 사이 통로
+    // G0=1.7  G1=9.5  G2=16.8  G3=22.2  G4=29.5  G5=37.3
+    // 경로: 스폰 → (gx,60) 적군 모래주머니 앞 정렬
+    //       → (gx,54) 적군 모래주머니 갭 통과
+    //       → (gx,27) 아군 모래주머니 앞
+    //       → (gx,22) 아군 모래주머니 갭 통과
+    //       → (gx, 3) 플레이어 스폰 (정지)
+    function R(gx) {
+        return [
+            { x: gx, z: 60 },
+            { x: gx, z: 54 },
+            { x: gx, z: 27 },
+            { x: gx, z: 22 },
+            { x: gx, z:  3 },
+        ];
+    }
+
     const spawns = [
-        { x:  4,    z: 68 }, { x:  9,    z: 71 }, { x: 14,   z: 67 },
-        { x: 19.5,  z: 73 }, { x: 25,    z: 68 }, { x: 30,   z: 71 },
-        { x: 35,    z: 67 }, { x:  7,    z: 65 }, { x: 17,   z: 70 },
-        { x: 22,    z: 65 }, { x: 27,    z: 73 }, { x: 33,   z: 66 },
+        { x:  4,   z: 68, r: R(1.7)  },
+        { x:  7,   z: 65, r: R(1.7)  },
+        { x:  9,   z: 71, r: R(9.5)  },
+        { x: 14,   z: 67, r: R(16.8) },
+        { x: 17,   z: 70, r: R(16.8) },
+        { x: 19.5, z: 73, r: R(22.2) },
+        { x: 22,   z: 65, r: R(22.2) },
+        { x: 25,   z: 68, r: R(29.5) },
+        { x: 27,   z: 73, r: R(29.5) },
+        { x: 30,   z: 71, r: R(29.5) },
+        { x: 33,   z: 66, r: R(37.3) },
+        { x: 35,   z: 67, r: R(37.3) },
     ];
+
     for (const sp of spawns) {
-        spawnEnemyAt(sp.x, sp.z, [
-            { x: sp.x + (Math.random()-0.5) * 5, z: 5  },
-            { x: sp.x + (Math.random()-0.5) * 5, z: 65 },
-        ], false, 0);
+        spawnEnemyAt(sp.x, sp.z, sp.r, false, 0);
+        enemies[enemies.length - 1].oneWayPatrol = true;
     }
     TOTAL_ENEMIES = enemies.length;
     document.getElementById('kill-counter').textContent = `KILLS: 0 / ${TOTAL_ENEMIES}`;

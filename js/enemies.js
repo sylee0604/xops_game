@@ -4,6 +4,40 @@
 // ENEMIES
 // =====================================================================
 
+// Assault map: sandbag gap x-centers (spaces between wall clusters)
+const _ASSAULT_GAPS = [1.7, 9.5, 16.8, 22.2, 29.5, 37.3];
+function _nearestGapX(x) {
+    return _ASSAULT_GAPS.reduce((best, g) => Math.abs(g - x) < Math.abs(best - x) ? g : best);
+}
+
+// Shared body-part geometries — never modified at runtime, safe to reuse across all units
+const _GEO = {
+    leg:     new THREE.BoxGeometry(0.14, 0.52, 0.15),
+    boot:    new THREE.BoxGeometry(0.15, 0.09, 0.19),
+    torso:   new THREE.BoxGeometry(0.38, 0.72, 0.20),
+    vest:    new THREE.BoxGeometry(0.36, 0.56, 0.18),
+    uArm:    new THREE.BoxGeometry(0.12, 0.25, 0.13),
+    lArm:    new THREE.BoxGeometry(0.10, 0.21, 0.11),
+    neck:    new THREE.BoxGeometry(0.12, 0.13, 0.12),
+    head:    new THREE.BoxGeometry(0.21, 0.21, 0.21),
+    helm:    new THREE.BoxGeometry(0.25, 0.15, 0.27),
+    brim:    new THREE.BoxGeometry(0.25, 0.04, 0.06),
+    eye:     new THREE.BoxGeometry(0.05, 0.038, 0.022),
+    gBody:   new THREE.BoxGeometry(0.055, 0.075, 0.42),
+    gBarrel: new THREE.BoxGeometry(0.022, 0.022, 0.20),
+    gMag:    new THREE.BoxGeometry(0.038, 0.08, 0.045),
+    gMag2:   new THREE.BoxGeometry(0.036, 0.05, 0.04),
+    gStock:  new THREE.BoxGeometry(0.045, 0.065, 0.18),
+    gHG:     new THREE.BoxGeometry(0.05, 0.045, 0.16),
+};
+
+// peek 타이머 헬퍼: phase 0/2(이동) = 짧게, phase 1/3(대기) = 길게
+function _nextPeekTimer(u) {
+    u.peekTimer = (u.peekPhase % 2 === 0)
+        ? 0.15 + Math.random() * 0.10
+        : 0.30 + Math.random() * 0.70;
+}
+
 // Raycaster reuse vars (avoid per-frame allocation)
 const _ray       = new THREE.Raycaster();
 const _eyePos    = new THREE.Vector3();
@@ -46,82 +80,31 @@ function spawnEnemies() {
 
         const group = new THREE.Group();
 
-        // Legs
-        const legGeo = new THREE.BoxGeometry(0.14, 0.52, 0.15);
-        const lLeg = new THREE.Mesh(legGeo, unifMat.clone());
-        lLeg.position.set(-0.10, 0.30, 0);
-        const rLeg = new THREE.Mesh(legGeo, unifMat.clone());
-        rLeg.position.set( 0.10, 0.30, 0);
+        const lLeg = new THREE.Mesh(_GEO.leg,  unifMat.clone()); lLeg.position.set(-0.10, 0.30, 0);
+        const rLeg = new THREE.Mesh(_GEO.leg,  unifMat.clone()); rLeg.position.set( 0.10, 0.30, 0);
+        const lBoot = new THREE.Mesh(_GEO.boot, bootMat); lBoot.position.set(-0.10, 0.045, 0.02);
+        const rBoot = new THREE.Mesh(_GEO.boot, bootMat); rBoot.position.set( 0.10, 0.045, 0.02);
+        const torso = new THREE.Mesh(_GEO.torso, unifMat.clone()); torso.position.y = 0.92;
+        const vest  = new THREE.Mesh(_GEO.vest,  vestMat); vest.position.set(0, 0.94, 0.01);
+        const lUA = new THREE.Mesh(_GEO.uArm, unifMat.clone()); lUA.position.set(-0.25, 1.10, 0);
+        const lLA = new THREE.Mesh(_GEO.lArm, unifMat.clone()); lLA.position.set(-0.25, 0.84, 0);
+        const rUA = new THREE.Mesh(_GEO.uArm, unifMat.clone()); rUA.position.set( 0.25, 1.10, 0);
+        const rLA = new THREE.Mesh(_GEO.lArm, unifMat.clone()); rLA.position.set( 0.25, 0.84, -0.08); rLA.rotation.x = -0.35;
+        const neck = new THREE.Mesh(_GEO.neck, skinMat); neck.position.y = 1.32;
+        const head = new THREE.Mesh(_GEO.head, skinMat); head.position.y = 1.50;
+        const helm = new THREE.Mesh(_GEO.helm, helmetMat); helm.position.set(0, 1.60, 0.01);
+        const brim = new THREE.Mesh(_GEO.brim, helmetMat); brim.position.set(0, 1.53, -0.145);
+        const lEye = new THREE.Mesh(_GEO.eye, eyeMat); lEye.position.set(-0.052, 1.50, -0.115);
+        const rEye = new THREE.Mesh(_GEO.eye, eyeMat); rEye.position.set( 0.052, 1.50, -0.115);
 
-        // Boots
-        const bootGeo = new THREE.BoxGeometry(0.15, 0.09, 0.19);
-        const lBoot = new THREE.Mesh(bootGeo, bootMat);
-        lBoot.position.set(-0.10, 0.045, 0.02);
-        const rBoot = new THREE.Mesh(bootGeo, bootMat);
-        rBoot.position.set( 0.10, 0.045, 0.02);
-
-        // Torso + plate carrier vest
-        const torsoGeo = new THREE.BoxGeometry(0.38, 0.72, 0.20);
-        const torso = new THREE.Mesh(torsoGeo, unifMat.clone());
-        torso.position.y = 0.92;
-        const vestGeo = new THREE.BoxGeometry(0.36, 0.56, 0.18);
-        const vest = new THREE.Mesh(vestGeo, vestMat); // bodyMesh (hit flash target)
-        vest.position.set(0, 0.94, 0.01);
-
-        // Arms
-        const uArmGeo = new THREE.BoxGeometry(0.12, 0.25, 0.13);
-        const lArmGeo = new THREE.BoxGeometry(0.10, 0.21, 0.11);
-        const lUA = new THREE.Mesh(uArmGeo, unifMat.clone());
-        lUA.position.set(-0.25, 1.10, 0);
-        const lLA = new THREE.Mesh(lArmGeo, unifMat.clone());
-        lLA.position.set(-0.25, 0.84, 0);
-        const rUA = new THREE.Mesh(uArmGeo, unifMat.clone());
-        rUA.position.set( 0.25, 1.10, 0);
-        const rLA = new THREE.Mesh(lArmGeo, unifMat.clone());
-        rLA.position.set( 0.25, 0.84, -0.08);
-        rLA.rotation.x = -0.35;
-
-        // Neck
-        const neckGeo = new THREE.BoxGeometry(0.12, 0.13, 0.12);
-        const neck = new THREE.Mesh(neckGeo, skinMat);
-        neck.position.y = 1.32;
-
-        // Head
-        const headGeo = new THREE.BoxGeometry(0.21, 0.21, 0.21);
-        const head = new THREE.Mesh(headGeo, skinMat);
-        head.position.y = 1.50;
-
-        // Helmet + brim
-        const helmGeo = new THREE.BoxGeometry(0.25, 0.15, 0.27);
-        const helm = new THREE.Mesh(helmGeo, helmetMat);
-        helm.position.set(0, 1.60, 0.01);
-        const brimGeo = new THREE.BoxGeometry(0.25, 0.04, 0.06);
-        const brim = new THREE.Mesh(brimGeo, helmetMat);
-        brim.position.set(0, 1.53, -0.145);
-
-        // Eyes
-        const eyeGeo = new THREE.BoxGeometry(0.05, 0.038, 0.022);
-        const lEye = new THREE.Mesh(eyeGeo, eyeMat);
-        lEye.position.set(-0.052, 1.50, -0.115);
-        const rEye = new THREE.Mesh(eyeGeo, eyeMat);
-        rEye.position.set( 0.052, 1.50, -0.115);
-
-        // AK-47 gun group
         const woodMat = new THREE.MeshPhongMaterial({ color: 0x7a4f1a });
         const gunGroup = new THREE.Group();
-        const gBody = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.075, 0.42), gunMat);
-        const gBarrel = new THREE.Mesh(new THREE.BoxGeometry(0.022, 0.022, 0.20), gunMat);
-        gBarrel.position.set(0, 0.015, -0.31);
-        const gMag1 = new THREE.Mesh(new THREE.BoxGeometry(0.038, 0.08, 0.045), gunMat);
-        gMag1.position.set(0, -0.075, -0.02);
-        const gMag2 = new THREE.Mesh(new THREE.BoxGeometry(0.036, 0.05, 0.04), gunMat);
-        gMag2.position.set(0, -0.13, -0.045);
-        gMag2.rotation.x = 0.35;
-        const gStock = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.065, 0.18), woodMat);
-        gStock.position.set(0, -0.008, 0.28);
-        const gHG = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.045, 0.16), woodMat);
-        gHG.position.set(0, -0.015, -0.16);
-        gunGroup.add(gBody, gBarrel, gMag1, gMag2, gStock, gHG);
+        const gBarrel = new THREE.Mesh(_GEO.gBarrel, gunMat); gBarrel.position.set(0, 0.015, -0.31);
+        const gMag1   = new THREE.Mesh(_GEO.gMag,    gunMat); gMag1.position.set(0, -0.075, -0.02);
+        const gMag2   = new THREE.Mesh(_GEO.gMag2,   gunMat); gMag2.position.set(0, -0.13, -0.045); gMag2.rotation.x = 0.35;
+        const gStock  = new THREE.Mesh(_GEO.gStock,  woodMat); gStock.position.set(0, -0.008, 0.28);
+        const gHG     = new THREE.Mesh(_GEO.gHG,     woodMat); gHG.position.set(0, -0.015, -0.16);
+        gunGroup.add(new THREE.Mesh(_GEO.gBody, gunMat), gBarrel, gMag1, gMag2, gStock, gHG);
         gunGroup.position.set(0.32, 1.04, -0.16);
         gunGroup.rotation.set(0.32, 0, 0);
 
@@ -190,22 +173,16 @@ function spawnEnemyAt(x, z, wpList, isZombie, floorY = 0) {
 
     const group = new THREE.Group();
 
-    const legGeo  = new THREE.BoxGeometry(0.14, 0.52, 0.15);
-    const lLeg = new THREE.Mesh(legGeo, clothMat.clone()); lLeg.position.set(-0.10, 0.30, 0);
-    const rLeg = new THREE.Mesh(legGeo, clothMat.clone()); rLeg.position.set( 0.10, 0.30, 0);
-    const bootGeo = new THREE.BoxGeometry(0.15, 0.09, 0.19);
-    const lBoot = new THREE.Mesh(bootGeo, bootMat); lBoot.position.set(-0.10, 0.045, 0.02);
-    const rBoot = new THREE.Mesh(bootGeo, bootMat); rBoot.position.set( 0.10, 0.045, 0.02);
-    const torso = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.72, 0.20), clothMat.clone());
-    torso.position.y = 0.92;
-    const vest = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.56, 0.18), isZombie ? clothMat : vestMat);
-    vest.position.set(0, 0.94, 0.01);
-    const uArmGeo = new THREE.BoxGeometry(0.12, 0.25, 0.13);
-    const lArmGeo = new THREE.BoxGeometry(0.10, 0.21, 0.11);
-    const lUA = new THREE.Mesh(uArmGeo, clothMat.clone()); lUA.position.set(-0.25, 1.10, 0);
-    const lLA = new THREE.Mesh(lArmGeo, clothMat.clone()); lLA.position.set(-0.25, 0.84, 0);
-    const rUA = new THREE.Mesh(uArmGeo, clothMat.clone()); rUA.position.set( 0.25, 1.10, 0);
-    const rLA = new THREE.Mesh(lArmGeo, clothMat.clone()); rLA.position.set( 0.25, 0.84, -0.08);
+    const lLeg = new THREE.Mesh(_GEO.leg,  clothMat.clone()); lLeg.position.set(-0.10, 0.30, 0);
+    const rLeg = new THREE.Mesh(_GEO.leg,  clothMat.clone()); rLeg.position.set( 0.10, 0.30, 0);
+    const lBoot = new THREE.Mesh(_GEO.boot, bootMat); lBoot.position.set(-0.10, 0.045, 0.02);
+    const rBoot = new THREE.Mesh(_GEO.boot, bootMat); rBoot.position.set( 0.10, 0.045, 0.02);
+    const torso = new THREE.Mesh(_GEO.torso, clothMat.clone()); torso.position.y = 0.92;
+    const vest  = new THREE.Mesh(_GEO.vest,  isZombie ? clothMat : vestMat); vest.position.set(0, 0.94, 0.01);
+    const lUA = new THREE.Mesh(_GEO.uArm, clothMat.clone()); lUA.position.set(-0.25, 1.10, 0);
+    const lLA = new THREE.Mesh(_GEO.lArm, clothMat.clone()); lLA.position.set(-0.25, 0.84, 0);
+    const rUA = new THREE.Mesh(_GEO.uArm, clothMat.clone()); rUA.position.set( 0.25, 1.10, 0);
+    const rLA = new THREE.Mesh(_GEO.lArm, clothMat.clone()); rLA.position.set( 0.25, 0.84, -0.08);
     rLA.rotation.x = -0.35;
     // 좀비: 팔을 앞으로 뻗음
     if (isZombie) {
@@ -214,24 +191,16 @@ function spawnEnemyAt(x, z, wpList, isZombie, floorY = 0) {
         lLA.position.set(-0.22, 0.90, -0.30); lLA.rotation.x = -0.9;
         rLA.position.set( 0.22, 0.90, -0.30); rLA.rotation.x = -0.9;
     }
-    const neck = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.13, 0.12), skinMat);
-    neck.position.y = 1.32;
-    const head = new THREE.Mesh(new THREE.BoxGeometry(0.21, 0.21, 0.21), skinMat);
-    head.position.y = 1.50;
-    if (isZombie) {
-        head.position.set(0, 1.45, -0.06);
-        head.rotation.x = 0.35;
-    }
-    const helm = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.15, 0.27), helmetMat);
-    helm.position.set(0, 1.60, 0.01);
-    const brim = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.04, 0.06), helmetMat);
-    brim.position.set(0, 1.53, -0.145);
+    const neck = new THREE.Mesh(_GEO.neck, skinMat); neck.position.y = 1.32;
+    const head = new THREE.Mesh(_GEO.head, skinMat); head.position.y = 1.50;
+    if (isZombie) { head.position.set(0, 1.45, -0.06); head.rotation.x = 0.35; }
+    const helm = new THREE.Mesh(_GEO.helm, helmetMat); helm.position.set(0, 1.60, 0.01);
+    const brim = new THREE.Mesh(_GEO.brim, helmetMat); brim.position.set(0, 1.53, -0.145);
 
     // 눈 (좀비: 빨간 눈, 병사: 검은 눈)
     const eyeMat = new THREE.MeshBasicMaterial({ color: isZombie ? 0xcc0000 : 0x111111 });
-    const eyeGeo = new THREE.BoxGeometry(0.05, 0.038, 0.022);
-    const lEye = new THREE.Mesh(eyeGeo, eyeMat);
-    const rEye = new THREE.Mesh(eyeGeo, eyeMat);
+    const lEye = new THREE.Mesh(_GEO.eye, eyeMat);
+    const rEye = new THREE.Mesh(_GEO.eye, eyeMat);
     if (isZombie) {
         lEye.position.set(-0.052, 1.44, -0.12);
         rEye.position.set( 0.052, 1.44, -0.12);
@@ -246,14 +215,10 @@ function spawnEnemyAt(x, z, wpList, isZombie, floorY = 0) {
     if (!isZombie) {
         const woodMat = new THREE.MeshPhongMaterial({ color: 0x7a4f1a });
         const gunGroup = new THREE.Group();
-        const gBody   = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.075, 0.42), gunMat);
-        const gBarrel = new THREE.Mesh(new THREE.BoxGeometry(0.022, 0.022, 0.20), gunMat);
-        gBarrel.position.set(0, 0.015, -0.31);
-        const gMag    = new THREE.Mesh(new THREE.BoxGeometry(0.038, 0.08, 0.045), gunMat);
-        gMag.position.set(0, -0.075, -0.02);
-        const gStock  = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.065, 0.18), woodMat);
-        gStock.position.set(0, -0.008, 0.28);
-        gunGroup.add(gBody, gBarrel, gMag, gStock);
+        const gBarrel = new THREE.Mesh(_GEO.gBarrel, gunMat); gBarrel.position.set(0, 0.015, -0.31);
+        const gMag    = new THREE.Mesh(_GEO.gMag,    gunMat); gMag.position.set(0, -0.075, -0.02);
+        const gStock  = new THREE.Mesh(_GEO.gStock,  woodMat); gStock.position.set(0, -0.008, 0.28);
+        gunGroup.add(new THREE.Mesh(_GEO.gBody, gunMat), gBarrel, gMag, gStock);
         gunGroup.position.set(0.32, 1.04, -0.16);
         gunGroup.rotation.set(0.32, 0, 0);
         toAdd.push(gunGroup);
@@ -387,9 +352,20 @@ function updateEnemies(dt) {
         let moveSpeed = e.speed;
 
         if (e.state === STATE.PATROL) {
+            // oneWayPatrol: 이미 지나친 waypoint(z가 현재 위치보다 뒤쪽) 스킵
+            if (e.oneWayPatrol) {
+                while (e.wpIndex < e.waypoints.length - 1 &&
+                       e.waypoints[e.wpIndex].z > e.pos.z) {
+                    e.wpIndex++;
+                }
+            }
             target = e.waypoints[e.wpIndex];
             moveSpeed = e.speed * 0.5;
-            if (e.pos.distanceTo(target) < 0.6) e.wpIndex ^= 1;
+            const _wpDx = e.pos.x - target.x, _wpDz = e.pos.z - target.z;
+            if (_wpDx * _wpDx + _wpDz * _wpDz < 0.36) {
+                if (e.oneWayPatrol) e.wpIndex = Math.min(e.wpIndex + 1, e.waypoints.length - 1);
+                else e.wpIndex = (e.wpIndex + 1) % e.waypoints.length;
+            }
         } else if (e.state === STATE.ALERT) {
             target = e.lastKnownPlayer;
         } else if (e.state === STATE.ATTACK) {
@@ -418,10 +394,7 @@ function updateEnemies(dt) {
                 e.peekTimer -= dt;
                 if (e.peekTimer <= 0) {
                     e.peekPhase = (e.peekPhase + 1) % 4;
-                    if      (e.peekPhase === 0) e.peekTimer = 0.15 + Math.random() * 0.10;
-                    else if (e.peekPhase === 1) e.peekTimer = 0.30 + Math.random() * 0.70;
-                    else if (e.peekPhase === 2) e.peekTimer = 0.15 + Math.random() * 0.10;
-                    else                        e.peekTimer = 0.30 + Math.random() * 0.70;
+                    _nextPeekTimer(e);
 
                     if (e.peekPhase === 1 && e.reactDelay <= 0) enemyShoot(e);
                 }
@@ -569,41 +542,29 @@ function spawnAllyAt(x, z) {
     const gunMat    = new THREE.MeshPhongMaterial({ color: 0x1a1a1a, shininess: 60 });
 
     const group = new THREE.Group();
-    const legGeo = new THREE.BoxGeometry(0.14, 0.52, 0.15);
-    const lLeg = new THREE.Mesh(legGeo, clothMat.clone()); lLeg.position.set(-0.10, 0.30, 0);
-    const rLeg = new THREE.Mesh(legGeo, clothMat.clone()); rLeg.position.set( 0.10, 0.30, 0);
-    const bootGeo = new THREE.BoxGeometry(0.15, 0.09, 0.19);
-    const lBoot = new THREE.Mesh(bootGeo, bootMat); lBoot.position.set(-0.10, 0.045, 0.02);
-    const rBoot = new THREE.Mesh(bootGeo, bootMat); rBoot.position.set( 0.10, 0.045, 0.02);
-    const torso = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.72, 0.20), clothMat.clone());
-    torso.position.y = 0.92;
-    const vest = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.56, 0.18), vestMat);
-    vest.position.set(0, 0.94, 0.01);
-    const uArmGeo = new THREE.BoxGeometry(0.12, 0.25, 0.13);
-    const lArmGeo = new THREE.BoxGeometry(0.10, 0.21, 0.11);
-    const lUA = new THREE.Mesh(uArmGeo, clothMat.clone()); lUA.position.set(-0.25, 1.10, 0);
-    const lLA = new THREE.Mesh(lArmGeo, clothMat.clone()); lLA.position.set(-0.25, 0.84, 0);
-    const rUA = new THREE.Mesh(uArmGeo, clothMat.clone()); rUA.position.set( 0.25, 1.10, 0);
-    const rLA = new THREE.Mesh(lArmGeo, clothMat.clone()); rLA.position.set( 0.25, 0.84, -0.08);
-    rLA.rotation.x = -0.35;
-    const neck = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.13, 0.12), skinMat); neck.position.y = 1.32;
-    const head = new THREE.Mesh(new THREE.BoxGeometry(0.21, 0.21, 0.21), skinMat); head.position.y = 1.50;
-    const helm = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.15, 0.27), helmetMat); helm.position.set(0, 1.60, 0.01);
-    const brim = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.04, 0.06), helmetMat); brim.position.set(0, 1.53, -0.145);
+    const lLeg = new THREE.Mesh(_GEO.leg,  clothMat.clone()); lLeg.position.set(-0.10, 0.30, 0);
+    const rLeg = new THREE.Mesh(_GEO.leg,  clothMat.clone()); rLeg.position.set( 0.10, 0.30, 0);
+    const lBoot = new THREE.Mesh(_GEO.boot, bootMat); lBoot.position.set(-0.10, 0.045, 0.02);
+    const rBoot = new THREE.Mesh(_GEO.boot, bootMat); rBoot.position.set( 0.10, 0.045, 0.02);
+    const torso = new THREE.Mesh(_GEO.torso, clothMat.clone()); torso.position.y = 0.92;
+    const vest  = new THREE.Mesh(_GEO.vest,  vestMat); vest.position.set(0, 0.94, 0.01);
+    const lUA = new THREE.Mesh(_GEO.uArm, clothMat.clone()); lUA.position.set(-0.25, 1.10, 0);
+    const lLA = new THREE.Mesh(_GEO.lArm, clothMat.clone()); lLA.position.set(-0.25, 0.84, 0);
+    const rUA = new THREE.Mesh(_GEO.uArm, clothMat.clone()); rUA.position.set( 0.25, 1.10, 0);
+    const rLA = new THREE.Mesh(_GEO.lArm, clothMat.clone()); rLA.position.set( 0.25, 0.84, -0.08); rLA.rotation.x = -0.35;
+    const neck = new THREE.Mesh(_GEO.neck, skinMat); neck.position.y = 1.32;
+    const head = new THREE.Mesh(_GEO.head, skinMat); head.position.y = 1.50;
+    const helm = new THREE.Mesh(_GEO.helm, helmetMat); helm.position.set(0, 1.60, 0.01);
+    const brim = new THREE.Mesh(_GEO.brim, helmetMat); brim.position.set(0, 1.53, -0.145);
     const eyeMat = new THREE.MeshBasicMaterial({ color: 0x111111 });
-    const eyeGeo = new THREE.BoxGeometry(0.05, 0.038, 0.022);
-    const lEye = new THREE.Mesh(eyeGeo, eyeMat); lEye.position.set(-0.052, 1.50, -0.115);
-    const rEye = new THREE.Mesh(eyeGeo, eyeMat); rEye.position.set( 0.052, 1.50, -0.115);
+    const lEye = new THREE.Mesh(_GEO.eye, eyeMat); lEye.position.set(-0.052, 1.50, -0.115);
+    const rEye = new THREE.Mesh(_GEO.eye, eyeMat); rEye.position.set( 0.052, 1.50, -0.115);
     const woodMat = new THREE.MeshPhongMaterial({ color: 0x7a4f1a });
     const gunGroup = new THREE.Group();
-    const gBody   = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.075, 0.42), gunMat);
-    const gBarrel = new THREE.Mesh(new THREE.BoxGeometry(0.022, 0.022, 0.20), gunMat);
-    gBarrel.position.set(0, 0.015, -0.31);
-    const gMag = new THREE.Mesh(new THREE.BoxGeometry(0.038, 0.08, 0.045), gunMat);
-    gMag.position.set(0, -0.075, -0.02);
-    const gStock = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.065, 0.18), woodMat);
-    gStock.position.set(0, -0.008, 0.28);
-    gunGroup.add(gBody, gBarrel, gMag, gStock);
+    const gBarrel = new THREE.Mesh(_GEO.gBarrel, gunMat); gBarrel.position.set(0, 0.015, -0.31);
+    const gMag    = new THREE.Mesh(_GEO.gMag,    gunMat); gMag.position.set(0, -0.075, -0.02);
+    const gStock  = new THREE.Mesh(_GEO.gStock,  woodMat); gStock.position.set(0, -0.008, 0.28);
+    gunGroup.add(new THREE.Mesh(_GEO.gBody, gunMat), gBarrel, gMag, gStock);
     gunGroup.position.set(0.32, 1.04, -0.16);
     gunGroup.rotation.set(0.32, 0, 0);
 
@@ -617,10 +578,14 @@ function spawnAllyAt(x, z) {
         pos: new THREE.Vector3(x, 0, z),
         health: 100,
         state: STATE.PATROL,
-        waypoints: [
-            new THREE.Vector3(x + (Math.random()-0.5)*5, 0, 38),
-            new THREE.Vector3(x + (Math.random()-0.5)*4, 0, 6),
-        ],
+        waypoints: (() => {
+            const gx = _nearestGapX(x);
+            return [
+                new THREE.Vector3(gx, 0, 21),  // 아군 모래주머니 앞
+                new THREE.Vector3(gx, 0, 28),  // 갭 통과 후
+                new THREE.Vector3(gx, 0, 45),  // 목표 지점 (여기서 정지)
+            ];
+        })(),
         wpIndex: 0,
         lastKnownEnemy: null,
         facing: 0,
@@ -663,7 +628,7 @@ function updateAllies(dt) {
 
         if (ally.state === STATE.PATROL) {
             const wp = ally.waypoints[ally.wpIndex];
-            if (ally.pos.distanceTo(wp) < 0.8) ally.wpIndex ^= 1;
+            if (ally.pos.distanceTo(wp) < 0.8) ally.wpIndex = Math.min(ally.wpIndex + 1, ally.waypoints.length - 1);
             const dx = wp.x - ally.pos.x, dz = wp.z - ally.pos.z;
             const len = Math.sqrt(dx*dx + dz*dz);
             if (len > 0.1) {
@@ -697,10 +662,7 @@ function updateAllies(dt) {
             ally.peekTimer -= dt;
             if (ally.peekTimer <= 0) {
                 ally.peekPhase = (ally.peekPhase + 1) % 4;
-                if      (ally.peekPhase === 0) ally.peekTimer = 0.15 + Math.random() * 0.10;
-                else if (ally.peekPhase === 1) ally.peekTimer = 0.30 + Math.random() * 0.70;
-                else if (ally.peekPhase === 2) ally.peekTimer = 0.15 + Math.random() * 0.10;
-                else                           ally.peekTimer = 0.30 + Math.random() * 0.70;
+                _nextPeekTimer(ally);
 
                 if (ally.peekPhase === 1 && ally.reactDelay <= 0 && targetEnemy) {
                     allyShoot(ally, targetEnemy);
@@ -716,8 +678,8 @@ function updateAllies(dt) {
                 ally.pos.z -= right.z * ally.speed * 0.85 * dt;
             }
 
-            // Advance if target too far
-            if (len > 28 && len > 0.1) {
+            // Advance only if target is very close (stay behind cover)
+            if (len > 10 && len < 25) {
                 ally.pos.x += (dx/len) * ally.speed * 0.45 * dt;
                 ally.pos.z += (dz/len) * ally.speed * 0.45 * dt;
             }
