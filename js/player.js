@@ -182,8 +182,10 @@ function updatePlayer(dt) {
     if (isScoped) {
         _scopeCanvas.style.display = 'block';
         drawScopeOverlay(player.currentWeapon === 3);
+        if (wm) wm.visible = false;
     } else {
         _scopeCanvas.style.display = 'none';
+        if (wm) wm.visible = !player.weapons[player.currentWeapon].dropped;
     }
 
     // ADS: 우클릭 시 FOV 좁히기, 탄퍼짐 0
