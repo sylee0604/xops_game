@@ -42,6 +42,7 @@ const walls = [];      // {box: THREE.Box3}
 const wallMeshList = [];
 const bullets = [];
 const enemies = [];
+const allies  = [];    // assault 맵 전용 아군 유닛
 const impacts = [];
 const pickups = [];    // {mesh, pos, weaponIndex, ammo}
 

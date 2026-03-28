@@ -40,6 +40,7 @@ function gameLoop() {
     const dt = Math.min(clock.getDelta(), 0.05);
     updatePlayer(dt);
     if (enemiesEnabled) updateEnemies(dt);
+    if (currentMap === 'assault') updateAllies(dt);
     updateBullets(dt);
     updateImpacts(dt);
     updatePickups();
@@ -84,6 +85,23 @@ function startGame(mapType) {
         player.pos.set(28, PLAYER_HEIGHT, 1.5);
         player.yaw = Math.PI;
         showMessage('MISSION 2 — HARBOR  ▶ 항구를 장악하라', 2500);
+    } else if (currentMap === 'assault') {
+        buildAssaultMap();
+        spawnAssaultEnemies();
+        spawnAssaultAllies();
+        spawnAssaultPickups();
+        for (let i = 0; i < player.weapons.length; i++) {
+            if (i !== 2) {
+                player.weapons[i].ammo = 0;
+                player.weapons[i].reserve = 0;
+                player.weapons[i].dropped = true;
+            }
+        }
+        player.carrySlots = [null, null];
+        player.currentWeapon = 2; // knife
+        player.pos.set(19.5, PLAYER_HEIGHT, 2);
+        player.yaw = Math.PI;
+        showMessage('MISSION 4 — ASSAULT  ▶ 아군과 함께 적을 섬멸하라', 2500);
     } else if (currentMap === 'tunnel') {
         buildTunnelMap();
         spawnTunnelZombies();

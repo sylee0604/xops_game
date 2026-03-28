@@ -378,10 +378,10 @@ function updateEnemies(dt) {
                 e.peekTimer -= dt;
                 if (e.peekTimer <= 0) {
                     e.peekPhase = (e.peekPhase + 1) % 4;
-                    if      (e.peekPhase === 0) e.peekTimer = 0.18 + Math.random() * 0.06;
-                    else if (e.peekPhase === 1) e.peekTimer = 0.52 + Math.random() * 0.08;
-                    else if (e.peekPhase === 2) e.peekTimer = 0.18 + Math.random() * 0.06;
-                    else                        e.peekTimer = 0.52 + Math.random() * 0.08;
+                    if      (e.peekPhase === 0) e.peekTimer = 0.15 + Math.random() * 0.10;
+                    else if (e.peekPhase === 1) e.peekTimer = 0.30 + Math.random() * 0.70;
+                    else if (e.peekPhase === 2) e.peekTimer = 0.15 + Math.random() * 0.10;
+                    else                        e.peekTimer = 0.30 + Math.random() * 0.70;
 
                     if (e.peekPhase === 1 && e.reactDelay <= 0) enemyShoot(e);
                 }
@@ -436,12 +436,10 @@ function updateEnemies(dt) {
 
 function enemyShoot(e) {
     const dist = e.pos.distanceTo(player.pos);
-    // 탄퍼짐: 기본값 증가 (0.03 → 0.07)
     const spread = 0.07 + dist * 0.0025;
 
     function _fire() {
         if (e.state === STATE.DEAD) return;
-        // 몸통 조준: player.pos.y(눈높이) - 0.5 = 가슴/복부
         const tgt = new THREE.Vector3(
             player.pos.x + (Math.random()-0.5) * spread * 5,
             (player.pos.y - 0.5) + (Math.random()-0.5) * spread * 3,
@@ -453,19 +451,236 @@ function enemyShoot(e) {
         if (dist < 60) playEnemyGunshot(1);
     }
 
-    const count = e.shootCount;
-    e.shootCount++;
+    // 랜덤 1~3발 점사
+    const count = 1 + Math.floor(Math.random() * 3);
+    _fire();
+    for (let i = 1; i < count; i++) setTimeout(_fire, i * 110);
+}
 
-    if (count === 0) {
-        // 초탄: 1발
-        _fire();
-    } else if (count % 2 === 1) {
-        // 홀수 회차: 2발 점사
-        _fire();
-        setTimeout(_fire, 120);
-    } else {
-        // 짝수 회차: 1발
-        _fire();
+// ── 아군 AI ──────────────────────────────────────────────────────────
+
+function canSeeEnemy(ally, enemy) {
+    if (enemy.state === STATE.DEAD) return false;
+    _eyePos.set(ally.pos.x, 1.45, ally.pos.z);
+    const enemyEye = new THREE.Vector3(enemy.pos.x, 1.45, enemy.pos.z);
+    const dist = _eyePos.distanceTo(enemyEye);
+    if (dist > ally.sightRange) return false;
+    _toPlayer.set(enemyEye.x - _eyePos.x, 0, enemyEye.z - _eyePos.z).normalize();
+    _fwd.set(-Math.sin(ally.facing), 0, -Math.cos(ally.facing));
+    if (_fwd.dot(_toPlayer) < FOV_COS && dist > 3) return false;
+    _rayDir.subVectors(enemyEye, _eyePos).normalize();
+    _ray.set(_eyePos, _rayDir);
+    const hits = _ray.intersectObjects(wallMeshList);
+    return (hits.length === 0 || hits[0].distance > dist - 0.3);
+}
+
+function allyShoot(ally, targetEnemy) {
+    const tpos = targetEnemy.pos;
+    const dist = ally.pos.distanceTo(tpos);
+    const spread = 0.06 + dist * 0.002;
+
+    function _fire() {
+        if (ally.state === STATE.DEAD || targetEnemy.state === STATE.DEAD) return;
+        const tgt = new THREE.Vector3(
+            tpos.x + (Math.random()-0.5) * spread * 5,
+            0.9   + (Math.random()-0.5) * spread * 3,
+            tpos.z + (Math.random()-0.5) * spread * 5
+        );
+        const origin = new THREE.Vector3(ally.pos.x, 1.50, ally.pos.z);
+        const dir = new THREE.Vector3().subVectors(tgt, origin).normalize();
+        spawnBullet(origin, dir, ally.damage, true, 140);
+        if (dist < 60) playEnemyGunshot(1);
+    }
+
+    const count = 1 + Math.floor(Math.random() * 3);
+    _fire();
+    for (let i = 1; i < count; i++) setTimeout(_fire, i * 110);
+}
+
+function hitAlly(ally, damage) {
+    if (ally.state === STATE.DEAD) return;
+    ally.health -= damage;
+    ally.bodyMesh.material.color.set(0xff2200);
+    setTimeout(() => {
+        if (ally.state !== STATE.DEAD) ally.bodyMesh.material.color.set(0x3a4e6a);
+    }, 80);
+    if (ally.health <= 0) killAlly(ally);
+}
+
+function killAlly(ally) {
+    ally.state = STATE.DEAD;
+    ally.mesh.rotation.z = Math.PI / 2;
+    ally.mesh.position.y = -0.3;
+    ally.mesh.children.forEach(c => { if (c.material) c.material.color.set(0x111111); });
+    showMessage('ALLY DOWN');
+}
+
+function spawnAllyAt(x, z) {
+    const skinMat   = new THREE.MeshPhongMaterial({ color: 0xb07040 });
+    const clothMat  = new THREE.MeshPhongMaterial({ color: 0x2a3a5a });
+    const vestMat   = new THREE.MeshPhongMaterial({ color: 0x3a4e6a });
+    const helmetMat = new THREE.MeshPhongMaterial({ color: 0x1a2a4a });
+    const bootMat   = new THREE.MeshPhongMaterial({ color: 0x111111 });
+    const gunMat    = new THREE.MeshPhongMaterial({ color: 0x1a1a1a, shininess: 60 });
+
+    const group = new THREE.Group();
+    const legGeo = new THREE.BoxGeometry(0.14, 0.52, 0.15);
+    const lLeg = new THREE.Mesh(legGeo, clothMat.clone()); lLeg.position.set(-0.10, 0.30, 0);
+    const rLeg = new THREE.Mesh(legGeo, clothMat.clone()); rLeg.position.set( 0.10, 0.30, 0);
+    const bootGeo = new THREE.BoxGeometry(0.15, 0.09, 0.19);
+    const lBoot = new THREE.Mesh(bootGeo, bootMat); lBoot.position.set(-0.10, 0.045, 0.02);
+    const rBoot = new THREE.Mesh(bootGeo, bootMat); rBoot.position.set( 0.10, 0.045, 0.02);
+    const torso = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.72, 0.20), clothMat.clone());
+    torso.position.y = 0.92;
+    const vest = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.56, 0.18), vestMat);
+    vest.position.set(0, 0.94, 0.01);
+    const uArmGeo = new THREE.BoxGeometry(0.12, 0.25, 0.13);
+    const lArmGeo = new THREE.BoxGeometry(0.10, 0.21, 0.11);
+    const lUA = new THREE.Mesh(uArmGeo, clothMat.clone()); lUA.position.set(-0.25, 1.10, 0);
+    const lLA = new THREE.Mesh(lArmGeo, clothMat.clone()); lLA.position.set(-0.25, 0.84, 0);
+    const rUA = new THREE.Mesh(uArmGeo, clothMat.clone()); rUA.position.set( 0.25, 1.10, 0);
+    const rLA = new THREE.Mesh(lArmGeo, clothMat.clone()); rLA.position.set( 0.25, 0.84, -0.08);
+    rLA.rotation.x = -0.35;
+    const neck = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.13, 0.12), skinMat); neck.position.y = 1.32;
+    const head = new THREE.Mesh(new THREE.BoxGeometry(0.21, 0.21, 0.21), skinMat); head.position.y = 1.50;
+    const helm = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.15, 0.27), helmetMat); helm.position.set(0, 1.60, 0.01);
+    const brim = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.04, 0.06), helmetMat); brim.position.set(0, 1.53, -0.145);
+    const eyeMat = new THREE.MeshBasicMaterial({ color: 0x111111 });
+    const eyeGeo = new THREE.BoxGeometry(0.05, 0.038, 0.022);
+    const lEye = new THREE.Mesh(eyeGeo, eyeMat); lEye.position.set(-0.052, 1.50, -0.115);
+    const rEye = new THREE.Mesh(eyeGeo, eyeMat); rEye.position.set( 0.052, 1.50, -0.115);
+    const woodMat = new THREE.MeshPhongMaterial({ color: 0x7a4f1a });
+    const gunGroup = new THREE.Group();
+    const gBody   = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.075, 0.42), gunMat);
+    const gBarrel = new THREE.Mesh(new THREE.BoxGeometry(0.022, 0.022, 0.20), gunMat);
+    gBarrel.position.set(0, 0.015, -0.31);
+    const gMag = new THREE.Mesh(new THREE.BoxGeometry(0.038, 0.08, 0.045), gunMat);
+    gMag.position.set(0, -0.075, -0.02);
+    const gStock = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.065, 0.18), woodMat);
+    gStock.position.set(0, -0.008, 0.28);
+    gunGroup.add(gBody, gBarrel, gMag, gStock);
+    gunGroup.position.set(0.32, 1.04, -0.16);
+    gunGroup.rotation.set(0.32, 0, 0);
+
+    group.add(lLeg, rLeg, lBoot, rBoot, torso, vest, lUA, lLA, rUA, rLA,
+              neck, head, helm, brim, lEye, rEye, gunGroup);
+    group.position.set(x, 0, z);
+    scene.add(group);
+
+    allies.push({
+        mesh: group, bodyMesh: vest,
+        pos: new THREE.Vector3(x, 0, z),
+        health: 100,
+        state: STATE.PATROL,
+        waypoints: [
+            new THREE.Vector3(x + (Math.random()-0.5)*5, 0, 38),
+            new THREE.Vector3(x + (Math.random()-0.5)*4, 0, 6),
+        ],
+        wpIndex: 0,
+        lastKnownEnemy: null,
+        facing: 0,
+        speed: 2.0 + Math.random() * 0.4,
+        sightRange: 35,
+        damage: 20,
+        walkPhase: Math.random() * Math.PI * 2,
+        peekPhase: 0,
+        peekTimer: 0.2 + Math.random() * 0.2,
+        reactDelay: 0,
+    });
+}
+
+function updateAllies(dt) {
+    for (const ally of allies) {
+        if (ally.state === STATE.DEAD) continue;
+
+        // Find nearest visible enemy
+        let targetEnemy = null;
+        let minDist = Infinity;
+        for (const e of enemies) {
+            if (e.state === STATE.DEAD) continue;
+            const d = ally.pos.distanceTo(e.pos);
+            if (d < minDist && canSeeEnemy(ally, e)) { minDist = d; targetEnemy = e; }
+        }
+
+        if (targetEnemy) {
+            if (ally.state !== STATE.ATTACK) {
+                ally.state = STATE.ATTACK;
+                ally.reactDelay = 0.5 + Math.random() * 0.3;
+                ally.peekPhase = 0;
+                ally.peekTimer = 0.15 + Math.random() * 0.1;
+            }
+            ally.lastKnownEnemy = targetEnemy.pos.clone();
+        } else {
+            if (ally.state === STATE.ATTACK) ally.state = STATE.PATROL;
+        }
+
+        let moveSpeed = ally.speed;
+
+        if (ally.state === STATE.PATROL) {
+            const wp = ally.waypoints[ally.wpIndex];
+            if (ally.pos.distanceTo(wp) < 0.8) ally.wpIndex ^= 1;
+            const dx = wp.x - ally.pos.x, dz = wp.z - ally.pos.z;
+            const len = Math.sqrt(dx*dx + dz*dz);
+            if (len > 0.1) {
+                const nx = dx/len, nz = dz/len;
+                const tf = Math.atan2(-nx, -nz);
+                let diff = tf - ally.facing;
+                while (diff >  Math.PI) diff -= Math.PI*2;
+                while (diff < -Math.PI) diff += Math.PI*2;
+                ally.facing += diff * Math.min(1, dt * 5);
+                ally.mesh.rotation.y = ally.facing;
+                ally.pos.x += nx * moveSpeed * 0.55 * dt;
+                ally.pos.z += nz * moveSpeed * 0.55 * dt;
+            }
+        } else if (ally.state === STATE.ATTACK) {
+            const target = targetEnemy ? targetEnemy.pos : ally.lastKnownEnemy;
+            if (!target) { ally.state = STATE.PATROL; continue; }
+
+            const dx = target.x - ally.pos.x, dz = target.z - ally.pos.z;
+            const len = Math.sqrt(dx*dx + dz*dz);
+            if (len > 0.1) {
+                const tf = Math.atan2(-dx/len, -dz/len);
+                let diff = tf - ally.facing;
+                while (diff >  Math.PI) diff -= Math.PI*2;
+                while (diff < -Math.PI) diff += Math.PI*2;
+                ally.facing += diff * Math.min(1, dt * 9);
+                ally.mesh.rotation.y = ally.facing;
+            }
+
+            if (ally.reactDelay > 0) ally.reactDelay -= dt;
+
+            ally.peekTimer -= dt;
+            if (ally.peekTimer <= 0) {
+                ally.peekPhase = (ally.peekPhase + 1) % 4;
+                if      (ally.peekPhase === 0) ally.peekTimer = 0.15 + Math.random() * 0.10;
+                else if (ally.peekPhase === 1) ally.peekTimer = 0.30 + Math.random() * 0.70;
+                else if (ally.peekPhase === 2) ally.peekTimer = 0.15 + Math.random() * 0.10;
+                else                           ally.peekTimer = 0.30 + Math.random() * 0.70;
+
+                if (ally.peekPhase === 1 && ally.reactDelay <= 0 && targetEnemy) {
+                    allyShoot(ally, targetEnemy);
+                }
+            }
+
+            const right = new THREE.Vector3(-Math.cos(ally.facing), 0, Math.sin(ally.facing));
+            if (ally.peekPhase === 0) {
+                ally.pos.x += right.x * ally.speed * 0.85 * dt;
+                ally.pos.z += right.z * ally.speed * 0.85 * dt;
+            } else if (ally.peekPhase === 2) {
+                ally.pos.x -= right.x * ally.speed * 0.85 * dt;
+                ally.pos.z -= right.z * ally.speed * 0.85 * dt;
+            }
+
+            // Advance if target too far
+            if (len > 28 && len > 0.1) {
+                ally.pos.x += (dx/len) * ally.speed * 0.45 * dt;
+                ally.pos.z += (dz/len) * ally.speed * 0.45 * dt;
+            }
+        }
+
+        resolveWallCollision(ally.pos, 0.35);
+        ally.walkPhase += dt * moveSpeed * 3;
+        ally.mesh.position.set(ally.pos.x, Math.sin(ally.walkPhase) * 0.03, ally.pos.z);
     }
 }
 

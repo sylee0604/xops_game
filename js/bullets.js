@@ -86,6 +86,20 @@ function updateBullets(dt) {
                     damagePlayer(b.damage);
                     remove = true;
                 }
+                // vs allies (assault 맵 아군)
+                if (!remove) {
+                    for (const ally of allies) {
+                        if (ally.state === STATE.DEAD) continue;
+                        _bHeadC.set(ally.pos.x, 1.52, ally.pos.z);
+                        _bBodyC.set(ally.pos.x, 0.88, ally.pos.z);
+                        if (segmentHitsSphere(b.prevPos, b.pos, _bHeadC, 0.22) ||
+                            segmentHitsSphere(b.prevPos, b.pos, _bBodyC, 0.46)) {
+                            hitAlly(ally, b.damage);
+                            spawnImpact(b.pos, 0xffaa00);
+                            remove = true; break;
+                        }
+                    }
+                }
             }
         }
 
