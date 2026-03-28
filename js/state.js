@@ -28,6 +28,7 @@ const player = {
     onGround: false,
     currentWeapon: 1,
     weapons: makeWeapons(),
+    carrySlots: [null, null],  // combat 맵 전용: 슬롯1·슬롯2 보유 무기 인덱스
     recoilPitch: 0,
     adsLocked: false,
     currentSpread: 0,

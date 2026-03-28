@@ -44,17 +44,43 @@ function createPickup(x, z, weaponIndex, ammo, deskY) {
 }
 
 function spawnPickups() {
-    // 전투 맵 중앙에 AR 하나 배치
-    const x = 10 * CELL + CELL / 2;
-    const z = 10 * CELL + CELL / 2;
-    createPickup(x, z, 1, 30);
+    // compound 맵 입구: AK(1) / MP5(5) / SPAS(6) / AWP(3) 일렬 배치
+    // 플레이어 시작(x=4.5, z=4.5)에서 정면(+z)으로 3유닛 앞
+    const lineup = [1, 5, 6, 3];
+    const startX = 3.5, lineZ = 7.5, spacing = 1.5;
+    lineup.forEach((wIdx, i) => {
+        const def = WEAPON_DEFS[wIdx];
+        createPickup(startX + i * spacing, lineZ, wIdx, def.ammo + def.reserve);
+    });
 }
 
 function updatePickups() {
     for (const pk of pickups) {
         if (!pk.active) continue;
         const d = new THREE.Vector2(player.pos.x - pk.pos.x, player.pos.z - pk.pos.z).length();
-        if (d < 1.5) {
+        if (d >= 1.5) continue;
+
+        if (currentMap === 'combat') {
+            // ── carry-slot 픽업 (compound 맵 전용) ──
+            let slotIdx = -1;
+            if (player.carrySlots[0] === null) slotIdx = 0;
+            else if (player.carrySlots[1] === null) slotIdx = 1;
+
+            if (slotIdx === -1) {
+                showMessage('INVENTORY FULL  /  G: 버리기');
+                continue;
+            }
+            const w = player.weapons[pk.weaponIndex];
+            const def = WEAPON_DEFS[pk.weaponIndex];
+            w.ammo    = Math.min(pk.ammo, def.maxAmmo);
+            w.reserve = Math.min(pk.ammo - w.ammo, def.reserve);
+            w.reloading = false;
+            w.dropped = false;
+            player.carrySlots[slotIdx] = pk.weaponIndex;
+            if (slotIdx === 0) switchWeapon(pk.weaponIndex);
+            showMessage(w.name);
+        } else {
+            // ── 기존 픽업 로직 (harbor / tunnel / training) ──
             const w = player.weapons[pk.weaponIndex];
             const _def = WEAPON_DEFS[pk.weaponIndex];
             const maxAmmo    = _def ? _def.ammo    : 1;
@@ -62,26 +88,24 @@ function updatePickups() {
             if (w.dropped || w.ammo < maxAmmo || w.reserve < maxReserve) {
                 const wasDrop = w.dropped;
                 if (wasDrop) {
-                    // 버렸던 총: 버릴 당시 남은 총알 그대로 복원
                     w.ammo    = Math.min(pk.ammo, maxAmmo);
                     w.reserve = Math.min(Math.max(0, pk.ammo - w.ammo), maxReserve);
                 } else {
-                    // 바닥에 원래 있던 총: 풀 탄약
                     w.ammo    = maxAmmo;
                     w.reserve = maxReserve;
                 }
                 w.reloading = false;
                 w.dropped = false;
-                // 현재 들고 있는 무기라면 모델 즉시 표시
                 if (wasDrop && pk.weaponIndex === player.currentWeapon) updateWeaponViewModel();
                 const names = ['PISTOL', 'ASSAULT RIFLE', 'KNIFE', 'AWP', 'M14 EBR', 'MP5', 'SPAS-12', 'M249'];
                 showMessage(names[pk.weaponIndex] + ' PICKED UP');
             }
-            if (!pk.persistent) {
-                pk.active = false;
-                scene.remove(pk.mesh);
-                scene.remove(pk.glow);
-            }
+        }
+
+        if (!pk.persistent) {
+            pk.active = false;
+            scene.remove(pk.mesh);
+            scene.remove(pk.glow);
         }
     }
 }
@@ -90,14 +114,27 @@ function dropWeapon() {
     if (player.currentWeapon === 2) return; // 칼은 버릴 수 없음
     const w = player.weapons[player.currentWeapon];
     if (w.dropped) return;
+
     const dropX = player.pos.x - Math.sin(player.yaw) * 2.5;
     const dropZ = player.pos.z - Math.cos(player.yaw) * 2.5;
     createPickup(dropX, dropZ, player.currentWeapon, w.ammo + w.reserve);
     const name = w.name;
     w.ammo = 0; w.reserve = 0; w.reloading = false; w.dropped = true;
-    // 맵에서 사용 가능한 슬롯(1~3번 키)에서 버리지 않은 다른 무기로 전환, 없으면 칼
-    const validSlots = [1,2,3].map(k => getWeaponForKey(k)).filter(i => i >= 0);
-    const next = validSlots.find(i => i !== player.currentWeapon && !player.weapons[i].dropped) ?? 2;
+
+    let next = 2; // 기본 폴백: 칼
+    if (currentMap === 'combat') {
+        // carry-slot에서 제거 후 압축
+        const slotIdx = player.carrySlots.indexOf(player.currentWeapon);
+        if (slotIdx !== -1) player.carrySlots[slotIdx] = null;
+        if (player.carrySlots[0] === null && player.carrySlots[1] !== null) {
+            player.carrySlots[0] = player.carrySlots[1];
+            player.carrySlots[1] = null;
+        }
+        next = player.carrySlots[0] ?? player.carrySlots[1] ?? 2;
+    } else {
+        const validSlots = [1,2,3].map(k => getWeaponForKey(k)).filter(i => i >= 0);
+        next = validSlots.find(i => i !== player.currentWeapon && !player.weapons[i].dropped) ?? 2;
+    }
     switchWeapon(next);
     showMessage(name + ' DROPPED');
 }

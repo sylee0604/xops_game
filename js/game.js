@@ -89,9 +89,18 @@ function startGame(mapType) {
         buildLighting();
         spawnEnemies();
         spawnPickups();
-        player.currentWeapon = 1; // AK
+        // compound: 칼만 지급, 나머지는 전부 빈 상태
+        for (let i = 0; i < player.weapons.length; i++) {
+            if (i !== 2) {
+                player.weapons[i].ammo = 0;
+                player.weapons[i].reserve = 0;
+                player.weapons[i].dropped = true;
+            }
+        }
+        player.carrySlots = [null, null];
+        player.currentWeapon = 2; // knife
         player.pos.set(CELL * 1.5, PLAYER_HEIGHT, CELL * 1.5);
-        player.yaw = Math.PI * 0.1;
+        player.yaw = Math.PI;
         showMessage('MISSION 1 — COMPOUND  ▶ 적을 모두 제거하라', 2500);
     }
 
