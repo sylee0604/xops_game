@@ -656,14 +656,14 @@ function startReload() {
 // 맵별 무기 슬롯: 1=메인총, 2=서브/슬롯2, 3=나이프 (훈련장은 전부 해금)
 function getWeaponForKey(keyNum) {
     if (currentMap === 'training') return keyNum - 1; // 키 1~8 → 인덱스 0~7
-    if (currentMap === 'combat') {
+    if (currentMap === 'combat' || currentMap === 'harbor') {
         // carry-slot 기반: 1=슬롯0, 2=슬롯1, 3=칼
         if (keyNum === 1) return player.carrySlots[0] ?? -1;
         if (keyNum === 2) return player.carrySlots[1] ?? -1;
         if (keyNum === 3) return 2;
         return -1;
     }
-    const mainIdx = { harbor: 4, tunnel: 7 }[currentMap] ?? 1;
+    const mainIdx = { tunnel: 7 }[currentMap] ?? 1;
     if (keyNum === 1) return mainIdx; // 메인총 (맵마다 다름)
     if (keyNum === 2) return 0;       // Desert Eagle
     if (keyNum === 3) return 2;       // Knife

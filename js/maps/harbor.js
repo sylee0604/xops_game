@@ -422,3 +422,14 @@ function spawnHarborEnemies() {
     document.getElementById('kill-counter').textContent = `KILLS: 0 / ${TOTAL_ENEMIES}`;
 }
 
+function spawnHarborPickups() {
+    // 플레이어 시작(x=28, z=4) 정면(+z) 앞에 일렬 배치
+    // M14(4) / AWP(3) / AK(1) / MP5(5)
+    const lineup = [4, 3, 1, 5];
+    const startX = 26.0, lineZ = 4.5, spacing = 1.5;
+    lineup.forEach((wIdx, i) => {
+        const def = WEAPON_DEFS[wIdx];
+        createPickup(startX + i * spacing, lineZ, wIdx, def.ammo + def.reserve);
+    });
+}
+

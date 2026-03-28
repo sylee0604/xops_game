@@ -71,10 +71,18 @@ function startGame(mapType) {
     } else if (currentMap === 'harbor') {
         buildHarborMap();
         spawnHarborEnemies();
-        player.currentWeapon = 4; // M14
-        // 입구 엄폐 컨테이너(z≈10) 뒤 — 적 시야 밖
-        player.pos.set(28, PLAYER_HEIGHT, 4);
-        player.yaw = Math.PI;  // +z 방향(맵 안쪽)을 봄
+        spawnHarborPickups();
+        for (let i = 0; i < player.weapons.length; i++) {
+            if (i !== 2) {
+                player.weapons[i].ammo = 0;
+                player.weapons[i].reserve = 0;
+                player.weapons[i].dropped = true;
+            }
+        }
+        player.carrySlots = [null, null];
+        player.currentWeapon = 2; // knife
+        player.pos.set(28, PLAYER_HEIGHT, 1.5);
+        player.yaw = Math.PI;
         showMessage('MISSION 2 — HARBOR  ▶ 항구를 장악하라', 2500);
     } else if (currentMap === 'tunnel') {
         buildTunnelMap();

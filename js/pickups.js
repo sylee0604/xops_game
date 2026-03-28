@@ -60,8 +60,8 @@ function updatePickups() {
         const d = new THREE.Vector2(player.pos.x - pk.pos.x, player.pos.z - pk.pos.z).length();
         if (d >= 1.5) continue;
 
-        if (currentMap === 'combat') {
-            // ── carry-slot 픽업 (compound 맵 전용) ──
+        if (currentMap === 'combat' || currentMap === 'harbor') {
+            // ── carry-slot 픽업 (compound / harbor 맵) ──
             let slotIdx = -1;
             if (player.carrySlots[0] === null) slotIdx = 0;
             else if (player.carrySlots[1] === null) slotIdx = 1;
@@ -122,7 +122,7 @@ function dropWeapon() {
     w.ammo = 0; w.reserve = 0; w.reloading = false; w.dropped = true;
 
     let next = 2; // 기본 폴백: 칼
-    if (currentMap === 'combat') {
+    if (currentMap === 'combat' || currentMap === 'harbor') {
         // carry-slot에서 제거 후 압축
         const slotIdx = player.carrySlots.indexOf(player.currentWeapon);
         if (slotIdx !== -1) player.carrySlots[slotIdx] = null;
