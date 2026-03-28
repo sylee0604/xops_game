@@ -534,7 +534,7 @@ function allyShoot(ally, targetEnemy) {
         );
         const origin = new THREE.Vector3(ally.pos.x, 1.50, ally.pos.z);
         const dir = new THREE.Vector3().subVectors(tgt, origin).normalize();
-        spawnBullet(origin, dir, ally.damage, true, 140);
+        spawnBullet(origin, dir, ally.damage, true, 140, true);
         if (dist < 60) playEnemyGunshot(1);
     }
 
@@ -558,7 +558,6 @@ function killAlly(ally) {
     ally.mesh.rotation.z = Math.PI / 2;
     ally.mesh.position.y = -0.3;
     ally.mesh.children.forEach(c => { if (c.material) c.material.color.set(0x111111); });
-    showMessage('ALLY DOWN');
 }
 
 function spawnAllyAt(x, z) {
