@@ -672,6 +672,7 @@ function getWeaponForKey(keyNum) {
 
 function switchWeapon(idx) {
     if (idx === player.currentWeapon) return;
+    if (!player.weapons[idx] || player.weapons[idx].dropped) return; // 버려진(없는) 무기로 전환 불가
 
     // 이전 무기 장전 취소
     const prev = player.weapons[player.currentWeapon];
@@ -689,6 +690,5 @@ function switchWeapon(idx) {
     keys['mouse2'] = false;
     player.adsLocked = false;
     updateWeaponViewModel();
-    // dropped 상태면 EMPTY 표시
-    showMessage(player.weapons[idx].dropped ? 'EMPTY' : player.weapons[idx].name);
+    showMessage(player.weapons[idx].name);
 }
