@@ -48,7 +48,7 @@ const pickups = [];    // {mesh, pos, weaponIndex, ammo}
 
 // ── 플랫폼 시스템 (올라갈 수 있는 표면) ──
 const platforms = []; // { minX, maxX, minZ, maxZ, y } — 표면 Y좌표
-const STEP_HEIGHT = 0.65; // 자동 스텝업 최대 높이 (계단 1단 = 0.25~0.35)
+const STEP_HEIGHT = 0.32; // 자동 스텝업 최대 높이 (계단 1단 = 0.25~0.30)
 
 function addPlatform(minX, maxX, minZ, maxZ, surfaceY) {
     platforms.push({ minX, maxX, minZ, maxZ, y: surfaceY });

@@ -45,7 +45,7 @@ const _playerEye = new THREE.Vector3();
 const _toPlayer  = new THREE.Vector3();
 const _fwd       = new THREE.Vector3();
 const _rayDir    = new THREE.Vector3();
-const FOV_COS    = Math.cos(THREE.MathUtils.degToRad(45));
+const FOV_COS    = Math.cos(THREE.MathUtils.degToRad(55));
 
 function canSeePlayer(e) {
     _eyePos.set(e.pos.x, 1.45, e.pos.z);
@@ -241,7 +241,7 @@ function spawnEnemyAt(x, z, wpList, isZombie, floorY = 0) {
         state: STATE.PATROL,
         waypoints: wps, wpIndex: 0,
         lastKnownPlayer: null, alertTimer: 0,
-        shootTimer: isZombie ? 0 : (1 + Math.random() * 0.5),
+        shootTimer: isZombie ? 0.2 : (1 + Math.random() * 0.5),
         shootCooldown: isZombie ? 1.2 : (0.8 + Math.random() * 0.4),
         speed: isZombie ? (4.56 + Math.random() * 0.96) : (2.2 + Math.random() * 0.5),
         sightRange: isZombie ? 22 : 35,
@@ -387,7 +387,7 @@ function updateEnemies(dt) {
                     }
                     moveSpeed = 0;
                 } else {
-                    e.shootTimer = 0;
+                    e.shootTimer = 0.2;
                 }
             } else if (seesTarget) {
                 // Peek-and-Shoot
