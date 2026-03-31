@@ -84,6 +84,11 @@ canvas { display: block; }
     position: fixed; top: 20px; right: 20px;
     color: #f90; font-size: 0.9em; letter-spacing: 2px;
 }
+/* Live score */
+#score-display {
+    position: fixed; top: 42px; right: 20px;
+    color: #ff0; font-size: 0.8em; letter-spacing: 2px;
+}
 
 /* Scope overlay */
 #scope-canvas {
@@ -182,6 +187,7 @@ canvas { display: block; }
     </div>
 
     <div id="kill-counter">KILLS: 0 / 10</div>
+    <div id="score-display">SCORE: 0</div>
     <div id="message"></div>
     <div id="state-bar">NORMAL</div>
     <div id="vignette"></div>

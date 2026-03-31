@@ -534,6 +534,7 @@ function updateWeaponViewModel() {
 
 function damagePlayer(dmg) {
     if (gameOver) return;
+    damageTaken += dmg;
     player.health = Math.max(0, player.health - dmg);
     // Vignette flash
     const v = document.getElementById('vignette');
@@ -543,17 +544,82 @@ function damagePlayer(dmg) {
     if (player.health <= 0) triggerGameOver();
 }
 
+// ── 점수 계산 ──────────────────────────────────────────────────────
+function calcMissionScore() {
+    const killScore     = kills * 100;
+    const par           = TOTAL_ENEMIES * 12;           // 적 1명당 12초가 기준시간
+    const timeBonus     = Math.max(0, Math.round(1000 * Math.max(0, 1 - missionTime / (par * 2))));
+    const survivalBonus = Math.round((player.health / player.maxHealth) * 500);
+    const noDamageBonus = damageTaken === 0 ? 500 : 0;
+    const total         = killScore + timeBonus + survivalBonus + noDamageBonus;
+    return { killScore, timeBonus, survivalBonus, noDamageBonus, total };
+}
+
+function getGrade(total) {
+    if (total >= 2400) return { letter: 'S', color: '#ffdd00' };
+    if (total >= 1700) return { letter: 'A', color: '#44ff88' };
+    if (total >= 1200) return { letter: 'B', color: '#44aaff' };
+    if (total >= 900)  return { letter: 'C', color: '#ffaa00' };
+    return              { letter: 'D', color: '#ff4444' };
+}
+
+function _fmtTime(sec) {
+    const m = Math.floor(sec / 60);
+    const s = Math.floor(sec % 60);
+    return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
+function _resultHTML(title, titleColor, subtitle, sc, grade, isVictory) {
+    const nd = sc.noDamageBonus > 0;
+    return `
+        <h1 style="color:${titleColor};font-size:2.4em;letter-spacing:8px;margin-bottom:4px">${title}</h1>
+        <div class="subtitle">${subtitle}</div>
+        <div style="margin:18px 0;font-family:'Courier New',monospace;font-size:0.88em;
+                    line-height:2;text-align:left;min-width:300px;
+                    background:rgba(255,255,255,0.04);padding:14px 22px;
+                    border:1px solid #2a2a2a;border-radius:4px">
+            <div style="display:flex;justify-content:space-between;color:#888">
+                <span>KILLS</span><span style="color:#fff">${kills} / ${TOTAL_ENEMIES}</span></div>
+            <div style="display:flex;justify-content:space-between;color:#888">
+                <span>TIME</span><span style="color:#fff">${_fmtTime(missionTime)}</span></div>
+            <div style="display:flex;justify-content:space-between;color:#888">
+                <span>DAMAGE TAKEN</span><span style="color:#fff">${Math.round(damageTaken)}</span></div>
+            <div style="border-top:1px solid #2a2a2a;margin:8px 0"></div>
+            <div style="display:flex;justify-content:space-between;color:#555">
+                <span>KILL SCORE</span><span style="color:#fa0">+${sc.killScore}</span></div>
+            <div style="display:flex;justify-content:space-between;color:#555">
+                <span>TIME BONUS</span><span style="color:#fa0">+${sc.timeBonus}</span></div>
+            <div style="display:flex;justify-content:space-between;color:#555">
+                <span>SURVIVAL</span><span style="color:#fa0">+${sc.survivalBonus}</span></div>
+            <div style="display:flex;justify-content:space-between;color:#555">
+                <span>NO-DAMAGE BONUS</span>
+                <span style="color:${nd ? '#fa0' : '#3a3a3a'}">${nd ? '+' + sc.noDamageBonus : '—'}</span></div>
+            <div style="border-top:1px solid #2a2a2a;margin:8px 0"></div>
+            <div style="display:flex;justify-content:space-between;font-size:1.1em">
+                <span style="color:#ccc">TOTAL</span>
+                <span style="color:#ff0">${sc.total.toLocaleString()}</span></div>
+        </div>
+        <div style="font-size:4.2em;color:${grade.color};
+                    text-shadow:0 0 28px ${grade.color};
+                    margin:6px 0;font-family:'Courier New',monospace;letter-spacing:6px">
+            [ ${grade.letter} ]
+        </div>
+        <button id="start-btn" style="margin-top:12px" onclick="location.reload()">
+            &#9654;&nbsp; ${isVictory ? 'PLAY AGAIN' : 'RETRY'}
+        </button>`;
+}
+
 function triggerGameOver() {
     if (gameOver) return;
     gameOver = true;
     gamePaused = true;
     document.exitPointerLock();
     setTimeout(() => {
-        document.getElementById('overlay').innerHTML = `
-            <h1 style="color:#e33;font-size:2.8em">MISSION FAILED</h1>
-            <div class="subtitle">K.I.A.</div>
-            <p style="color:#aaa;margin:20px 0">KILLS: ${kills} / ${TOTAL_ENEMIES}</p>
-            <button id="start-btn" onclick="location.reload()">▶  RETRY</button>`;
+        const sc    = calcMissionScore();
+        const grade = getGrade(sc.total);
+        document.getElementById('overlay').innerHTML = _resultHTML(
+            'MISSION FAILED', '#e33', 'K.I.A.', sc, grade, false
+        );
         document.getElementById('overlay').style.display = 'flex';
     }, 500);
 }

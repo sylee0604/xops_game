@@ -99,6 +99,9 @@ function updateHUD() {
         document.getElementById('weapon-name').textContent  = w.name;
     }
 
+    // Live score (kill score only; bonuses shown at mission end)
+    document.getElementById('score-display').textContent = `SCORE: ${(kills * 100).toLocaleString()}`;
+
     // Crosshair spread
     const spread = player.currentSpread;
     const gap = 6 + spread * 250;

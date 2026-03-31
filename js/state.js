@@ -92,3 +92,10 @@ const _tv3 = new THREE.Vector3();
 let walkPhase = 0;
 let bhopFlag = false;    // 공중에서 Shift 눌렀는지
 let bhopWindow = 0;      // 착지 후 점프 유효 시간 (초)
+
+// =====================================================================
+// SCORE & MISSION TRACKING
+// =====================================================================
+let missionStartTime = 0;  // Date.now() at mission start
+let missionTime      = 0;  // elapsed seconds (updated every frame)
+let damageTaken      = 0;  // total damage received this mission

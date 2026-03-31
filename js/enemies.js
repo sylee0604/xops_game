@@ -740,11 +740,11 @@ function killEnemy(e, fromAlly = false) {
         setTimeout(() => {
             showMessage('\u2605 MISSION COMPLETE \u2605', 6000);
             setTimeout(() => {
-                document.getElementById('overlay').innerHTML = `
-                    <h1 style="color:#0f0;font-size:2.5em">MISSION COMPLETE</h1>
-                    <div class="subtitle">ALL TARGETS ELIMINATED</div>
-                    <p style="color:#aaa;margin:20px 0">KILLS: ${kills} / ${TOTAL_ENEMIES}</p>
-                    <button id="start-btn" onclick="location.reload()">&#9654;  PLAY AGAIN</button>`;
+                const sc    = calcMissionScore();
+                const grade = getGrade(sc.total);
+                document.getElementById('overlay').innerHTML = _resultHTML(
+                    'MISSION COMPLETE', '#0f0', 'ALL TARGETS ELIMINATED', sc, grade, true
+                );
                 document.getElementById('overlay').style.display = 'flex';
                 document.exitPointerLock();
                 gamePaused = true;

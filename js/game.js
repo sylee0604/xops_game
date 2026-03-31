@@ -38,6 +38,7 @@ function gameLoop() {
     if (!gameStarted || gamePaused) return;
 
     const dt = Math.min(clock.getDelta(), 0.05);
+    missionTime = (Date.now() - missionStartTime) / 1000;
     updatePlayer(dt);
     if (enemiesEnabled) updateEnemies(dt);
     if (currentMap === 'assault') updateAllies(dt);
@@ -114,6 +115,13 @@ function startGame(mapType) {
         player.yaw = Math.PI;
         showMessage('MISSION 1 — COMPOUND  ▶ 적을 모두 제거하라', 2500);
     }
+
+    // 점수 초기화
+    kills            = 0;
+    missionStartTime = Date.now();
+    missionTime      = 0;
+    damageTaken      = 0;
+    document.getElementById('score-display').textContent = 'SCORE: 0';
 
     updateWeaponViewModel(); // currentWeapon 세팅 후 즉시 올바른 모델 표시
     gameStarted = true;
