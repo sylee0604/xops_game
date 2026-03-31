@@ -200,21 +200,65 @@ canvas { display: block; }
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
-<script src="js/constants.js"></script>
-<script src="js/state.js"></script>
-<script src="js/audio.js"></script>
-<script src="js/physics.js"></script>
-<script src="js/pickups.js"></script>
-<script src="js/enemies.js"></script>
-<script src="js/bullets.js"></script>
-<script src="js/weapons.js"></script>
-<script src="js/hud.js"></script>
-<script src="js/player.js"></script>
-<script src="js/maps/combat.js"></script>
-<script src="js/maps/harbor.js"></script>
-<script src="js/maps/tunnel.js"></script>
-<script src="js/maps/training.js"></script>
-<script src="js/maps/assault.js"></script>
-<script src="js/game.js"></script>
+<script type="module">
+// ================================================================
+// 보안 로더: 모든 게임 코드를 클로저 스코프 안에서 실행
+// player, enemies, WEAPON_DEFS 등이 window에 노출되지 않음
+// ================================================================
+const _GAME_FILES = [
+    'js/constants.js',
+    'js/state.js',
+    'js/audio.js',
+    'js/physics.js',
+    'js/pickups.js',
+    'js/enemies.js',
+    'js/bullets.js',
+    'js/weapons.js',
+    'js/hud.js',
+    'js/player.js',
+    'js/maps/combat.js',
+    'js/maps/harbor.js',
+    'js/maps/tunnel.js',
+    'js/maps/training.js',
+    'js/maps/assault.js',
+    'js/game.js',
+];
+
+try {
+    const _sources = await Promise.all(
+        _GAME_FILES.map(f => fetch(f).then(r => {
+            if (!r.ok) throw new Error(`Failed to load ${f}: ${r.status}`);
+            return r.text();
+        }))
+    );
+    const _combined = _sources.join('\n;\n');
+
+    // 모든 게임 코드를 함수 스코프에서 실행 — window에 전역 노출 없음
+    // THREE만 파라미터로 주입, startGame만 반환해서 window에 등록
+    const _init = new Function('THREE', `
+        'use strict';
+        ${_combined}
+        return { startGame };
+    `);
+
+    const { startGame } = _init(window.THREE);
+
+    // window.startGame만 외부에 노출 (HTML onclick에서 호출하기 위해 필수)
+    // 덮어쓰기·재설정 불가로 잠금
+    Object.defineProperty(window, 'startGame', {
+        value: startGame,
+        writable: false,
+        configurable: false,
+        enumerable: false,
+    });
+
+} catch (err) {
+    console.error('[XOPS] 게임 로드 실패:', err);
+    document.body.innerHTML = `<div style="color:#f44;font-family:monospace;padding:40px">
+        게임 로드 실패: ${err.message}<br><br>
+        반드시 웹 서버를 통해 실행하세요 (서버시작.bat).
+    </div>`;
+}
+</script>
 </body>
 </html>

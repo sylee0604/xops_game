@@ -151,6 +151,10 @@ const WEAPON_DEFS = [
     },
 ];
 
+// 무기 정의 원본 동결 — 런타임에 damage/fireRate 등 스탯 수정 불가
+WEAPON_DEFS.forEach(d => Object.freeze(d));
+Object.freeze(WEAPON_DEFS);
+
 // WEAPON_DEFS에서 viewmodel 위치/회전 배열 파생
 const weaponBasePos = WEAPON_DEFS.map(d => d.viewPos);
 const weaponBaseRot = WEAPON_DEFS.map(d => d.viewRot);
