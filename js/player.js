@@ -177,8 +177,19 @@ function updatePlayer(dt) {
     // 총기 조준 시 크로스헤어 숨김 (가늠자/가늠쇠로 조준, 나이프 제외)
     document.getElementById('crosshair').style.opacity = adsActive ? '0' : '1';
 
-    // 스코프 무기 (AWP=3, M14=4) ADS 시 스코프 오버레이
-    const isScoped = adsActive && (player.currentWeapon === 3 || player.currentWeapon === 4);
+    // ADS FOV lerp — 줌인: dt*9(≈300ms), 줌아웃: dt*12(≈230ms)
+    const targetFov  = adsActive ? (w.adsFov ?? 35) : 72;
+    const lerpFactor = Math.min(1, dt * (targetFov < camera.fov ? 9 : 12));
+    camera.fov += (targetFov - camera.fov) * lerpFactor;
+    camera.updateProjectionMatrix();
+
+    // 스코프 무기 (AWP=3, M14=4): FOV가 목표값의 80% 이상 수렴했을 때만 오버레이 표시
+    // → mouse2 눌러도 즉시 전환되지 않고, 총이 눈 앞으로 올라오는 느낌
+    const isScopeWeapon = player.currentWeapon === 3 || player.currentWeapon === 4;
+    const fovRange      = 72 - (w.adsFov ?? 35);
+    const isScoped = adsActive && isScopeWeapon
+        && fovRange > 0 && (camera.fov - targetFov) < fovRange * 0.20;
+
     if (isScoped) {
         _scopeCanvas.style.display = 'block';
         drawScopeOverlay(player.currentWeapon === 3);
@@ -187,11 +198,8 @@ function updatePlayer(dt) {
         _scopeCanvas.style.display = 'none';
         if (wm) wm.visible = !player.weapons[player.currentWeapon].dropped;
     }
+    player.adsInScope = isScoped;
 
-    // ADS: 우클릭 시 FOV 좁히기, 탄퍼짐 0
-    const targetFov = adsActive ? (w.adsFov ?? 35) : 72;
-    camera.fov += (targetFov - camera.fov) * Math.min(1, dt * 14);
-    camera.updateProjectionMatrix();
     // ADS 중엔 빠른 회복만, 강제 0 제거 (해제 후 잔존 spread 방지)
     if (adsActive) player.currentSpread = Math.max(0, player.currentSpread - dt * 1.2);
 

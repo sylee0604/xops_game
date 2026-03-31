@@ -31,6 +31,7 @@ const player = {
     carrySlots: [null, null],  // combat 맵 전용: 슬롯1·슬롯2 보유 무기 인덱스
     recoilPitch: 0,
     adsLocked: false,
+    adsInScope: false,   // 스코프 오버레이가 실제로 열려 있는 상태 (FOV 수렴 후)
     currentSpread: 0,
     footstepTimer: 0,
 };

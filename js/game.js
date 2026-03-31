@@ -50,11 +50,9 @@ function gameLoop() {
     renderer.clear();
     renderer.render(scene, camera);
     renderer.clearDepth();
-    const _skipWeaponRender = keys['mouse2'] && !player.adsLocked
-        && (player.currentWeapon === 3 || player.currentWeapon === 4)
-        && !player.weapons[player.currentWeapon].dropped
-        && !player.weapons[player.currentWeapon].reloading;
-    if (!_skipWeaponRender) renderer.render(weaponScene, weaponCamera);
+    // 스코프 오버레이가 실제로 열렸을 때만 weapon scene 렌더 생략
+    // (FOV 수렴 전에는 총기 모델이 화면에 남아 있어야 자연스러움)
+    if (!player.adsInScope) renderer.render(weaponScene, weaponCamera);
 }
 
 
