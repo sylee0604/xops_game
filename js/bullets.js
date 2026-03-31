@@ -13,10 +13,11 @@ const TRACER_GEO   = new THREE.BufferGeometry().setFromPoints([
 const TRACER_MAT_P = new THREE.LineBasicMaterial({ color: 0xffcc00, transparent: true, opacity: 0.7 });
 const TRACER_MAT_E = new THREE.LineBasicMaterial({ color: 0xff6600, transparent: true, opacity: 0.7 });
 // updateBullets 재사용 임시 벡터 (매 프레임 new Vector3 방지)
-const _bStep   = new THREE.Vector3();
-const _bHeadC  = new THREE.Vector3();
-const _bBodyC  = new THREE.Vector3();
-const _bNearC  = new THREE.Vector3();
+const _bStep    = new THREE.Vector3();
+const _bHeadC   = new THREE.Vector3();
+const _bBodyC   = new THREE.Vector3();
+const _bNearC   = new THREE.Vector3();
+const _bHitNorm = new THREE.Vector3(); // 피격 역방향 (파티클 방향용)
 
 function spawnBullet(origin, dir, damage, isPlayer, speed, isAlly = false) {
     // Bullet limit: prevent unbounded growth
@@ -51,6 +52,8 @@ function updateBullets(dt) {
             // Wall collision
             for (const w of walls) {
                 if (w.box.containsPoint(b.pos)) {
+                    const wallN = spawnDecal(b.pos, b.prevPos, w.box); // 탄흔 + 법선 반환
+                    spawnBurst(b.pos, wallN, 'concrete', 6);           // 콘크리트 파편
                     spawnImpact(b.pos);
                     remove = true; break;
                 }
@@ -67,11 +70,15 @@ function updateBullets(dt) {
                     if (segmentHitsSphere(b.prevPos, b.pos, _bHeadC, 0.22)) {
                         hitEnemy(e, b.damage * 2, b.isAlly);
                         spawnImpact(b.pos, 0xff3300);
+                        _bHitNorm.copy(b.dir).negate();
+                        spawnBurst(b.pos, _bHitNorm, 'headshot', 12); // 헤드샷 혈흔
                         if (!b.isAlly) showMessage('HEADSHOT!');
                         remove = true; break;
                     } else if (segmentHitsSphere(b.prevPos, b.pos, _bBodyC, 0.46)) {
                         hitEnemy(e, b.damage, b.isAlly);
                         spawnImpact(b.pos, 0xffaa00);
+                        _bHitNorm.copy(b.dir).negate();
+                        spawnBurst(b.pos, _bHitNorm, 'blood', 7);     // 몸 피격 혈흔
                         remove = true; break;
                     }
                 }

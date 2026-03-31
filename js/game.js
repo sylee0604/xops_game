@@ -45,6 +45,7 @@ function gameLoop() {
     updateBullets(dt);
     updateImpacts(dt);
     updatePickups();
+    updateBursts(dt);
     updateHUD();
     renderer.clear();
     renderer.render(scene, camera);
