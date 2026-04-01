@@ -729,6 +729,8 @@ function killEnemy(e, fromAlly = false) {
     document.getElementById('kill-counter').textContent = `KILLS: ${kills} / ${TOTAL_ENEMIES}`;
     if (!fromAlly) showMessage('ENEMY DOWN');
 
+    GameEvents.emit('enemy_killed', { enemy: e, fromAlly });
+
     // Dead enemy cleanup after 3s
     setTimeout(() => {
         const idx = enemies.indexOf(e);
@@ -736,21 +738,5 @@ function killEnemy(e, fromAlly = false) {
     }, 3000);
 
     const alive = enemies.filter(en => en.state !== STATE.DEAD).length;
-    if (alive === 0) {
-        // 서바이벌 모드: MISSION COMPLETE 없이 다음 웨이브 처리
-        if (currentMap === 'survival') { onSurvivalWaveClear(); return; }
-        setTimeout(() => {
-            showMessage('\u2605 MISSION COMPLETE \u2605', 6000);
-            setTimeout(() => {
-                const sc    = calcMissionScore();
-                const grade = getGrade(sc.total);
-                document.getElementById('overlay').innerHTML = _resultHTML(
-                    'MISSION COMPLETE', '#0f0', 'ALL TARGETS ELIMINATED', sc, grade, true
-                );
-                document.getElementById('overlay').style.display = 'flex';
-                document.exitPointerLock();
-                gamePaused = true;
-            }, 3000);
-        }, 1000);
-    }
+    if (alive === 0) GameEvents.emit('all_enemies_dead');
 }

@@ -63,11 +63,30 @@ function _resetToKnife() {
     player.currentWeapon = 2;
 }
 
+// 미션 성공 화면 (표준 맵 공통)
+function _showMissionComplete() {
+    setTimeout(() => {
+        showMessage('\u2605 MISSION COMPLETE \u2605', 6000);
+        setTimeout(() => {
+            const sc    = calcMissionScore();
+            const grade = getGrade(sc.total);
+            document.getElementById('overlay').innerHTML = _resultHTML(
+                'MISSION COMPLETE', '#0f0', 'ALL TARGETS ELIMINATED', sc, grade, true
+            );
+            document.getElementById('overlay').style.display = 'flex';
+            document.exitPointerLock();
+            gamePaused = true;
+        }, 3000);
+    }, 1000);
+}
+
 // =====================================================================
 // MAP REGISTRY — 맵 추가 시 이 객체에 항목 하나만 추가하면 됨
-// setup()   : 맵 빌드 + 플레이어 초기 세팅
-// update(dt): 매 프레임 호출 (없으면 생략)
-// msg / msgDur: 시작 메시지
+// setup()       : 맵 빌드 + 플레이어 초기 세팅
+// update(dt)    : 매 프레임 호출 (없으면 생략)
+// onAllDead()   : 'all_enemies_dead' 이벤트 수신 시 동작 (없으면 생략)
+// kiaSubtitle() : 사망 화면 부제 (없으면 기본 'K.I.A.')
+// msg / msgDur  : 시작 메시지
 // =====================================================================
 const MAP_REGISTRY = {
     combat: {
@@ -78,6 +97,7 @@ const MAP_REGISTRY = {
             player.yaw = Math.PI;
         },
         msg: 'MISSION 1 — COMPOUND  ▶ 적을 모두 제거하라', msgDur: 2500,
+        onAllDead: _showMissionComplete,
     },
     harbor: {
         setup() {
@@ -87,6 +107,7 @@ const MAP_REGISTRY = {
             player.yaw = Math.PI;
         },
         msg: 'MISSION 2 — HARBOR  ▶ 항구를 장악하라', msgDur: 2500,
+        onAllDead: _showMissionComplete,
     },
     tunnel: {
         setup() {
@@ -96,6 +117,7 @@ const MAP_REGISTRY = {
             player.yaw = Math.PI;
         },
         msg: 'MISSION 3 — TUNNEL  ▶ 좀비를 제거하라', msgDur: 2500,
+        onAllDead: _showMissionComplete,
     },
     assault: {
         setup() {
@@ -106,6 +128,7 @@ const MAP_REGISTRY = {
         },
         msg: 'MISSION 4 — ASSAULT  ▶ 아군과 함께 적을 섬멸하라', msgDur: 2500,
         update: (dt) => updateAllies(dt),
+        onAllDead: _showMissionComplete,
     },
     survival: {
         setup() {
@@ -119,6 +142,8 @@ const MAP_REGISTRY = {
         },
         msg: 'SURVIVAL — 웨이브 시작까지 대기...', msgDur: 3000,
         update: (dt) => updateSurvival(dt),
+        onAllDead: onSurvivalWaveClear,
+        kiaSubtitle: () => `K.I.A. — REACHED WAVE ${survivalWave}`,
     },
     training: {
         setup() {
@@ -144,6 +169,11 @@ function startGame(mapType) {
 
     const mapDef = MAP_REGISTRY[currentMap] ?? MAP_REGISTRY.combat;
     mapDef.setup();
+
+    // 'all_enemies_dead' 리스너를 맵 정의에서 등록
+    GameEvents.off('all_enemies_dead');
+    if (mapDef.onAllDead) GameEvents.on('all_enemies_dead', mapDef.onAllDead);
+
     showMessage(mapDef.msg, mapDef.msgDur);
 
     // 점수 초기화

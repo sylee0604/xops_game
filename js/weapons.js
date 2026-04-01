@@ -619,9 +619,7 @@ function triggerGameOver() {
     setTimeout(() => {
         const sc       = calcMissionScore();
         const grade    = getGrade(sc.total);
-        const subtitle = currentMap === 'survival'
-            ? `K.I.A. — REACHED WAVE ${survivalWave}`
-            : 'K.I.A.';
+        const subtitle = MAP_REGISTRY[currentMap]?.kiaSubtitle?.() ?? 'K.I.A.';
         document.getElementById('overlay').innerHTML = _resultHTML(
             'MISSION FAILED', '#e33', subtitle, sc, grade, false
         );
