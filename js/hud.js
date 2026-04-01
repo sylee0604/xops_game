@@ -4,6 +4,58 @@
 // HUD
 // =====================================================================
 
+// ── 데미지 방향 인디케이터 ──────────────────────────────────────────
+const _dirCanvas = document.getElementById('dir-canvas');
+const _dirCtx    = _dirCanvas.getContext('2d');
+const _dmgInds   = []; // { angle, life, maxLife }
+
+/**
+ * 피격 방향 인디케이터를 추가한다.
+ * @param {number} relAngle  플레이어 시점 기준 각도 (0=정면, +π/2=오른쪽, +π/-π=후방, -π/2=왼쪽)
+ */
+function showDamageIndicator(relAngle) {
+    _dmgInds.push({ angle: relAngle, life: 1.8, maxLife: 1.8 });
+}
+
+function drawDamageIndicators(dt) {
+    const W = innerWidth, H = innerHeight;
+    if (_dirCanvas.width !== W || _dirCanvas.height !== H) {
+        _dirCanvas.width = W;
+        _dirCanvas.height = H;
+    }
+    _dirCtx.clearRect(0, 0, W, H);
+    if (_dmgInds.length === 0) return;
+
+    const cx = W * 0.5, cy = H * 0.5;
+    const r  = Math.min(W, H) * 0.42;
+
+    for (let i = _dmgInds.length - 1; i >= 0; i--) {
+        const ind = _dmgInds[i];
+        ind.life -= dt;
+        if (ind.life <= 0) { _dmgInds.splice(i, 1); continue; }
+
+        const alpha  = ind.life / ind.maxLife;
+        // relAngle: 0=앞(12시), +π/2=오른쪽(3시), +π=뒤(6시), -π/2=왼쪽(9시)
+        // Canvas: 0=3시, +π/2=6시 → canvasAngle = relAngle - π/2
+        const cAngle = ind.angle - Math.PI * 0.5;
+        const sweep  = 0.44; // ≈25° 반폭
+
+        const gr = _dirCtx.createRadialGradient(cx, cy, r * 0.48, cx, cy, r);
+        gr.addColorStop(0,    `rgba(255,20,0,0)`);
+        gr.addColorStop(0.55, `rgba(255,20,0,${(0.68 * alpha).toFixed(3)})`);
+        gr.addColorStop(1,    `rgba(255,20,0,0)`);
+
+        _dirCtx.save();
+        _dirCtx.beginPath();
+        _dirCtx.moveTo(cx, cy);
+        _dirCtx.arc(cx, cy, r, cAngle - sweep, cAngle + sweep);
+        _dirCtx.closePath();
+        _dirCtx.fillStyle = gr;
+        _dirCtx.fill();
+        _dirCtx.restore();
+    }
+}
+
 const _scopeCanvas = document.getElementById('scope-canvas');
 const _scopeCtx    = _scopeCanvas.getContext('2d');
 let _scopeW = 0;

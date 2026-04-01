@@ -18,6 +18,7 @@ const _bHeadC   = new THREE.Vector3();
 const _bBodyC   = new THREE.Vector3();
 const _bNearC   = new THREE.Vector3();
 const _bHitNorm = new THREE.Vector3(); // 피격 역방향 (파티클 방향용)
+const _bHitPt   = new THREE.Vector3(); // 탄흔 실제 진입점 (segmentHitsBox 결과)
 
 function spawnBullet(origin, dir, damage, isPlayer, speed, isAlly = false) {
     // Bullet limit: prevent unbounded growth
@@ -87,10 +88,13 @@ function updateBullets(dt) {
                 _bHeadC.set(player.pos.x, player.pos.y,       player.pos.z);
                 _bBodyC.set(player.pos.x, player.pos.y - 0.6, player.pos.z);
                 if (segmentHitsSphere(b.prevPos, b.pos, _bHeadC, 0.28)) {
-                    damagePlayer(b.damage + 8); // 헤드샷 33
+                    // 피격 방향 계산: 총알이 날아온 방향을 플레이어 시점 각도로 변환
+                    const _s = Math.sin(player.yaw), _c = Math.cos(player.yaw);
+                    damagePlayer(b.damage + 8, Math.atan2(-b.dir.x * _c + b.dir.z * _s, b.dir.x * _s + b.dir.z * _c));
                     remove = true;
                 } else if (segmentHitsSphere(b.prevPos, b.pos, _bBodyC, 0.38)) {
-                    damagePlayer(b.damage);
+                    const _s = Math.sin(player.yaw), _c = Math.cos(player.yaw);
+                    damagePlayer(b.damage, Math.atan2(-b.dir.x * _c + b.dir.z * _s, b.dir.x * _s + b.dir.z * _c));
                     remove = true;
                 }
                 // vs allies (assault 맵 아군)

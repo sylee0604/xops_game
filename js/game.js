@@ -42,11 +42,13 @@ function gameLoop() {
     updatePlayer(dt);
     if (enemiesEnabled) updateEnemies(dt);
     if (currentMap === 'assault') updateAllies(dt);
+    if (currentMap === 'survival') updateSurvival(dt);
     updateBullets(dt);
     updateImpacts(dt);
     updatePickups();
     updateBursts(dt);
     updateHUD();
+    drawDamageIndicators(dt);
     renderer.clear();
     renderer.render(scene, camera);
     renderer.clearDepth();
@@ -104,6 +106,15 @@ function startGame(mapType) {
         player.pos.set(5, PLAYER_HEIGHT, 1.5);
         player.yaw = Math.PI;
         showMessage('MISSION 3 — TUNNEL  ▶ 좀비를 제거하라', 2500);
+    } else if (currentMap === 'survival') {
+        buildSurvivalMap();
+        TOTAL_ENEMIES = 0; // 웨이브 스폰마다 누적
+        player.currentWeapon = 1; // AK-47
+        player.pos.set(20, PLAYER_HEIGHT, 20);
+        player.yaw = Math.PI;
+        document.getElementById('wave-display').style.display = 'block';
+        document.getElementById('kill-counter').textContent = 'KILLS: 0';
+        showMessage('SURVIVAL — 웨이브 시작까지 대기...', 3000);
     } else {
         buildMap();
         buildLighting();

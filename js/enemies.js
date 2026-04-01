@@ -737,6 +737,8 @@ function killEnemy(e, fromAlly = false) {
 
     const alive = enemies.filter(en => en.state !== STATE.DEAD).length;
     if (alive === 0) {
+        // 서바이벌 모드: MISSION COMPLETE 없이 다음 웨이브 처리
+        if (currentMap === 'survival') { onSurvivalWaveClear(); return; }
         setTimeout(() => {
             showMessage('\u2605 MISSION COMPLETE \u2605', 6000);
             setTimeout(() => {

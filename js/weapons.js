@@ -532,7 +532,7 @@ function updateWeaponViewModel() {
 }
 
 
-function damagePlayer(dmg) {
+function damagePlayer(dmg, fromAngle = null) {
     if (gameOver) return;
     damageTaken += dmg;
     player.health = Math.max(0, player.health - dmg);
@@ -540,6 +540,8 @@ function damagePlayer(dmg) {
     const v = document.getElementById('vignette');
     v.style.background = 'radial-gradient(ellipse at center, transparent 40%, rgba(255,0,0,0.55) 100%)';
     setTimeout(() => v.style.background = '', 250);
+    // 데미지 방향 인디케이터
+    if (fromAngle !== null) showDamageIndicator(fromAngle);
 
     if (player.health <= 0) triggerGameOver();
 }
@@ -615,10 +617,13 @@ function triggerGameOver() {
     gamePaused = true;
     document.exitPointerLock();
     setTimeout(() => {
-        const sc    = calcMissionScore();
-        const grade = getGrade(sc.total);
+        const sc       = calcMissionScore();
+        const grade    = getGrade(sc.total);
+        const subtitle = currentMap === 'survival'
+            ? `K.I.A. — REACHED WAVE ${survivalWave}`
+            : 'K.I.A.';
         document.getElementById('overlay').innerHTML = _resultHTML(
-            'MISSION FAILED', '#e33', 'K.I.A.', sc, grade, false
+            'MISSION FAILED', '#e33', subtitle, sc, grade, false
         );
         document.getElementById('overlay').style.display = 'flex';
     }, 500);

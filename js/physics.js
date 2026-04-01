@@ -30,6 +30,42 @@ function resolveWallCollision(pos, radius, feetY) {
     }
 }
 
+// 선분(p0→p1)이 AABB box와 교차하는지 판정 (slab 알고리즘)
+// 교차 시 첫 진입 점의 {t, x, y, z} 반환, 교차 없으면 null
+// containsPoint 대신 이 함수를 쓰면 고속 총알이 벽을 통과하는 문제 해결
+function segmentHitsBox(p0, p1, box) {
+    const dx = p1.x - p0.x, dy = p1.y - p0.y, dz = p1.z - p0.z;
+    let tmin = 0, tmax = 1;
+
+    // X 슬랩
+    if (Math.abs(dx) < 1e-9) { if (p0.x < box.min.x || p0.x > box.max.x) return null; }
+    else {
+        const tx1 = (box.min.x - p0.x) / dx, tx2 = (box.max.x - p0.x) / dx;
+        tmin = Math.max(tmin, Math.min(tx1, tx2));
+        tmax = Math.min(tmax, Math.max(tx1, tx2));
+        if (tmin > tmax) return null;
+    }
+    // Y 슬랩
+    if (Math.abs(dy) < 1e-9) { if (p0.y < box.min.y || p0.y > box.max.y) return null; }
+    else {
+        const ty1 = (box.min.y - p0.y) / dy, ty2 = (box.max.y - p0.y) / dy;
+        tmin = Math.max(tmin, Math.min(ty1, ty2));
+        tmax = Math.min(tmax, Math.max(ty1, ty2));
+        if (tmin > tmax) return null;
+    }
+    // Z 슬랩
+    if (Math.abs(dz) < 1e-9) { if (p0.z < box.min.z || p0.z > box.max.z) return null; }
+    else {
+        const tz1 = (box.min.z - p0.z) / dz, tz2 = (box.max.z - p0.z) / dz;
+        tmin = Math.max(tmin, Math.min(tz1, tz2));
+        tmax = Math.min(tmax, Math.max(tz1, tz2));
+        if (tmin > tmax) return null;
+    }
+
+    if (tmin > 1) return null; // 선분 밖 (벽이 완전히 p1 너머)
+    return { t: tmin, x: p0.x + dx*tmin, y: p0.y + dy*tmin, z: p0.z + dz*tmin };
+}
+
 // 선분(p0->p1)이 구(center, radius)를 통과하는지 판정
 function segmentHitsSphere(p0, p1, center, radius) {
     const dx = p1.x - p0.x, dy = p1.y - p0.y, dz = p1.z - p0.z;
