@@ -31,6 +31,11 @@ const _GEO = {
     gHG:     new THREE.BoxGeometry(0.05, 0.045, 0.16),
 };
 
+// Shared gun/wood materials — gunGroup is a THREE.Group (no .material),
+// so its children are NOT reached by the death-darkening forEach → safe to share globally.
+const _MAT_GUN  = new THREE.MeshPhongMaterial({ color: 0x1a1a1a, shininess: 60 });
+const _MAT_WOOD = new THREE.MeshPhongMaterial({ color: 0x7a4f1a });
+
 // peek 타이머 헬퍼: phase 0/2(이동) = 짧게, phase 1/3(대기) = 길게
 function _nextPeekTimer(u) {
     u.peekTimer = (u.peekPhase % 2 === 0)
@@ -75,21 +80,20 @@ function spawnEnemies() {
         const vestMat   = new THREE.MeshPhongMaterial({ color: 0x1e3a0f });
         const helmetMat = new THREE.MeshPhongMaterial({ color: 0x1a2e0a });
         const bootMat   = new THREE.MeshPhongMaterial({ color: 0x111111 });
-        const gunMat    = new THREE.MeshPhongMaterial({ color: 0x1a1a1a, shininess: 60 });
         const eyeMat    = new THREE.MeshBasicMaterial({ color: 0x111111 });
 
         const group = new THREE.Group();
 
-        const lLeg = new THREE.Mesh(_GEO.leg,  unifMat.clone()); lLeg.position.set(-0.10, 0.30, 0);
-        const rLeg = new THREE.Mesh(_GEO.leg,  unifMat.clone()); rLeg.position.set( 0.10, 0.30, 0);
+        const lLeg = new THREE.Mesh(_GEO.leg,  unifMat); lLeg.position.set(-0.10, 0.30, 0);
+        const rLeg = new THREE.Mesh(_GEO.leg,  unifMat); rLeg.position.set( 0.10, 0.30, 0);
         const lBoot = new THREE.Mesh(_GEO.boot, bootMat); lBoot.position.set(-0.10, 0.045, 0.02);
         const rBoot = new THREE.Mesh(_GEO.boot, bootMat); rBoot.position.set( 0.10, 0.045, 0.02);
-        const torso = new THREE.Mesh(_GEO.torso, unifMat.clone()); torso.position.y = 0.92;
+        const torso = new THREE.Mesh(_GEO.torso, unifMat); torso.position.y = 0.92;
         const vest  = new THREE.Mesh(_GEO.vest,  vestMat); vest.position.set(0, 0.94, 0.01);
-        const lUA = new THREE.Mesh(_GEO.uArm, unifMat.clone()); lUA.position.set(-0.25, 1.10, 0);
-        const lLA = new THREE.Mesh(_GEO.lArm, unifMat.clone()); lLA.position.set(-0.25, 0.84, 0);
-        const rUA = new THREE.Mesh(_GEO.uArm, unifMat.clone()); rUA.position.set( 0.25, 1.10, 0);
-        const rLA = new THREE.Mesh(_GEO.lArm, unifMat.clone()); rLA.position.set( 0.25, 0.84, -0.08); rLA.rotation.x = -0.35;
+        const lUA = new THREE.Mesh(_GEO.uArm, unifMat); lUA.position.set(-0.25, 1.10, 0);
+        const lLA = new THREE.Mesh(_GEO.lArm, unifMat); lLA.position.set(-0.25, 0.84, 0);
+        const rUA = new THREE.Mesh(_GEO.uArm, unifMat); rUA.position.set( 0.25, 1.10, 0);
+        const rLA = new THREE.Mesh(_GEO.lArm, unifMat); rLA.position.set( 0.25, 0.84, -0.08); rLA.rotation.x = -0.35;
         const neck = new THREE.Mesh(_GEO.neck, skinMat); neck.position.y = 1.32;
         const head = new THREE.Mesh(_GEO.head, skinMat); head.position.y = 1.50;
         const helm = new THREE.Mesh(_GEO.helm, helmetMat); helm.position.set(0, 1.60, 0.01);
@@ -97,14 +101,13 @@ function spawnEnemies() {
         const lEye = new THREE.Mesh(_GEO.eye, eyeMat); lEye.position.set(-0.052, 1.50, -0.115);
         const rEye = new THREE.Mesh(_GEO.eye, eyeMat); rEye.position.set( 0.052, 1.50, -0.115);
 
-        const woodMat = new THREE.MeshPhongMaterial({ color: 0x7a4f1a });
         const gunGroup = new THREE.Group();
-        const gBarrel = new THREE.Mesh(_GEO.gBarrel, gunMat); gBarrel.position.set(0, 0.015, -0.31);
-        const gMag1   = new THREE.Mesh(_GEO.gMag,    gunMat); gMag1.position.set(0, -0.075, -0.02);
-        const gMag2   = new THREE.Mesh(_GEO.gMag2,   gunMat); gMag2.position.set(0, -0.13, -0.045); gMag2.rotation.x = 0.35;
-        const gStock  = new THREE.Mesh(_GEO.gStock,  woodMat); gStock.position.set(0, -0.008, 0.28);
-        const gHG     = new THREE.Mesh(_GEO.gHG,     woodMat); gHG.position.set(0, -0.015, -0.16);
-        gunGroup.add(new THREE.Mesh(_GEO.gBody, gunMat), gBarrel, gMag1, gMag2, gStock, gHG);
+        const gBarrel = new THREE.Mesh(_GEO.gBarrel, _MAT_GUN); gBarrel.position.set(0, 0.015, -0.31);
+        const gMag1   = new THREE.Mesh(_GEO.gMag,    _MAT_GUN); gMag1.position.set(0, -0.075, -0.02);
+        const gMag2   = new THREE.Mesh(_GEO.gMag2,   _MAT_GUN); gMag2.position.set(0, -0.13, -0.045); gMag2.rotation.x = 0.35;
+        const gStock  = new THREE.Mesh(_GEO.gStock,  _MAT_WOOD); gStock.position.set(0, -0.008, 0.28);
+        const gHG     = new THREE.Mesh(_GEO.gHG,     _MAT_WOOD); gHG.position.set(0, -0.015, -0.16);
+        gunGroup.add(new THREE.Mesh(_GEO.gBody, _MAT_GUN), gBarrel, gMag1, gMag2, gStock, gHG);
         gunGroup.position.set(0.32, 1.04, -0.16);
         gunGroup.rotation.set(0.32, 0, 0);
 
@@ -169,20 +172,19 @@ function spawnEnemyAt(x, z, wpList, isZombie, floorY = 0) {
     const vestMat   = new THREE.MeshPhongMaterial({ color: 0x1e3a0f });
     const helmetMat = new THREE.MeshPhongMaterial({ color: 0x1a2e0a });
     const bootMat   = new THREE.MeshPhongMaterial({ color: 0x111111 });
-    const gunMat    = new THREE.MeshPhongMaterial({ color: 0x1a1a1a, shininess: 60 });
 
     const group = new THREE.Group();
 
-    const lLeg = new THREE.Mesh(_GEO.leg,  clothMat.clone()); lLeg.position.set(-0.10, 0.30, 0);
-    const rLeg = new THREE.Mesh(_GEO.leg,  clothMat.clone()); rLeg.position.set( 0.10, 0.30, 0);
+    const lLeg = new THREE.Mesh(_GEO.leg,  clothMat); lLeg.position.set(-0.10, 0.30, 0);
+    const rLeg = new THREE.Mesh(_GEO.leg,  clothMat); rLeg.position.set( 0.10, 0.30, 0);
     const lBoot = new THREE.Mesh(_GEO.boot, bootMat); lBoot.position.set(-0.10, 0.045, 0.02);
     const rBoot = new THREE.Mesh(_GEO.boot, bootMat); rBoot.position.set( 0.10, 0.045, 0.02);
-    const torso = new THREE.Mesh(_GEO.torso, clothMat.clone()); torso.position.y = 0.92;
+    const torso = new THREE.Mesh(_GEO.torso, clothMat); torso.position.y = 0.92;
     const vest  = new THREE.Mesh(_GEO.vest,  isZombie ? clothMat : vestMat); vest.position.set(0, 0.94, 0.01);
-    const lUA = new THREE.Mesh(_GEO.uArm, clothMat.clone()); lUA.position.set(-0.25, 1.10, 0);
-    const lLA = new THREE.Mesh(_GEO.lArm, clothMat.clone()); lLA.position.set(-0.25, 0.84, 0);
-    const rUA = new THREE.Mesh(_GEO.uArm, clothMat.clone()); rUA.position.set( 0.25, 1.10, 0);
-    const rLA = new THREE.Mesh(_GEO.lArm, clothMat.clone()); rLA.position.set( 0.25, 0.84, -0.08);
+    const lUA = new THREE.Mesh(_GEO.uArm, clothMat); lUA.position.set(-0.25, 1.10, 0);
+    const lLA = new THREE.Mesh(_GEO.lArm, clothMat); lLA.position.set(-0.25, 0.84, 0);
+    const rUA = new THREE.Mesh(_GEO.uArm, clothMat); rUA.position.set( 0.25, 1.10, 0);
+    const rLA = new THREE.Mesh(_GEO.lArm, clothMat); rLA.position.set( 0.25, 0.84, -0.08);
     rLA.rotation.x = -0.35;
     // 좀비: 팔을 앞으로 뻗음
     if (isZombie) {
@@ -213,12 +215,11 @@ function spawnEnemyAt(x, z, wpList, isZombie, floorY = 0) {
     if (!isZombie) toAdd.push(helm, brim);
 
     if (!isZombie) {
-        const woodMat = new THREE.MeshPhongMaterial({ color: 0x7a4f1a });
         const gunGroup = new THREE.Group();
-        const gBarrel = new THREE.Mesh(_GEO.gBarrel, gunMat); gBarrel.position.set(0, 0.015, -0.31);
-        const gMag    = new THREE.Mesh(_GEO.gMag,    gunMat); gMag.position.set(0, -0.075, -0.02);
-        const gStock  = new THREE.Mesh(_GEO.gStock,  woodMat); gStock.position.set(0, -0.008, 0.28);
-        gunGroup.add(new THREE.Mesh(_GEO.gBody, gunMat), gBarrel, gMag, gStock);
+        const gBarrel = new THREE.Mesh(_GEO.gBarrel, _MAT_GUN); gBarrel.position.set(0, 0.015, -0.31);
+        const gMag    = new THREE.Mesh(_GEO.gMag,    _MAT_GUN); gMag.position.set(0, -0.075, -0.02);
+        const gStock  = new THREE.Mesh(_GEO.gStock,  _MAT_WOOD); gStock.position.set(0, -0.008, 0.28);
+        gunGroup.add(new THREE.Mesh(_GEO.gBody, _MAT_GUN), gBarrel, gMag, gStock);
         gunGroup.position.set(0.32, 1.04, -0.16);
         gunGroup.rotation.set(0.32, 0, 0);
         toAdd.push(gunGroup);
@@ -539,19 +540,18 @@ function spawnAllyAt(x, z) {
     const vestMat   = new THREE.MeshPhongMaterial({ color: 0x3a4e6a });
     const helmetMat = new THREE.MeshPhongMaterial({ color: 0x1a2a4a });
     const bootMat   = new THREE.MeshPhongMaterial({ color: 0x111111 });
-    const gunMat    = new THREE.MeshPhongMaterial({ color: 0x1a1a1a, shininess: 60 });
 
     const group = new THREE.Group();
-    const lLeg = new THREE.Mesh(_GEO.leg,  clothMat.clone()); lLeg.position.set(-0.10, 0.30, 0);
-    const rLeg = new THREE.Mesh(_GEO.leg,  clothMat.clone()); rLeg.position.set( 0.10, 0.30, 0);
+    const lLeg = new THREE.Mesh(_GEO.leg,  clothMat); lLeg.position.set(-0.10, 0.30, 0);
+    const rLeg = new THREE.Mesh(_GEO.leg,  clothMat); rLeg.position.set( 0.10, 0.30, 0);
     const lBoot = new THREE.Mesh(_GEO.boot, bootMat); lBoot.position.set(-0.10, 0.045, 0.02);
     const rBoot = new THREE.Mesh(_GEO.boot, bootMat); rBoot.position.set( 0.10, 0.045, 0.02);
-    const torso = new THREE.Mesh(_GEO.torso, clothMat.clone()); torso.position.y = 0.92;
+    const torso = new THREE.Mesh(_GEO.torso, clothMat); torso.position.y = 0.92;
     const vest  = new THREE.Mesh(_GEO.vest,  vestMat); vest.position.set(0, 0.94, 0.01);
-    const lUA = new THREE.Mesh(_GEO.uArm, clothMat.clone()); lUA.position.set(-0.25, 1.10, 0);
-    const lLA = new THREE.Mesh(_GEO.lArm, clothMat.clone()); lLA.position.set(-0.25, 0.84, 0);
-    const rUA = new THREE.Mesh(_GEO.uArm, clothMat.clone()); rUA.position.set( 0.25, 1.10, 0);
-    const rLA = new THREE.Mesh(_GEO.lArm, clothMat.clone()); rLA.position.set( 0.25, 0.84, -0.08); rLA.rotation.x = -0.35;
+    const lUA = new THREE.Mesh(_GEO.uArm, clothMat); lUA.position.set(-0.25, 1.10, 0);
+    const lLA = new THREE.Mesh(_GEO.lArm, clothMat); lLA.position.set(-0.25, 0.84, 0);
+    const rUA = new THREE.Mesh(_GEO.uArm, clothMat); rUA.position.set( 0.25, 1.10, 0);
+    const rLA = new THREE.Mesh(_GEO.lArm, clothMat); rLA.position.set( 0.25, 0.84, -0.08); rLA.rotation.x = -0.35;
     const neck = new THREE.Mesh(_GEO.neck, skinMat); neck.position.y = 1.32;
     const head = new THREE.Mesh(_GEO.head, skinMat); head.position.y = 1.50;
     const helm = new THREE.Mesh(_GEO.helm, helmetMat); helm.position.set(0, 1.60, 0.01);
@@ -559,12 +559,11 @@ function spawnAllyAt(x, z) {
     const eyeMat = new THREE.MeshBasicMaterial({ color: 0x111111 });
     const lEye = new THREE.Mesh(_GEO.eye, eyeMat); lEye.position.set(-0.052, 1.50, -0.115);
     const rEye = new THREE.Mesh(_GEO.eye, eyeMat); rEye.position.set( 0.052, 1.50, -0.115);
-    const woodMat = new THREE.MeshPhongMaterial({ color: 0x7a4f1a });
     const gunGroup = new THREE.Group();
-    const gBarrel = new THREE.Mesh(_GEO.gBarrel, gunMat); gBarrel.position.set(0, 0.015, -0.31);
-    const gMag    = new THREE.Mesh(_GEO.gMag,    gunMat); gMag.position.set(0, -0.075, -0.02);
-    const gStock  = new THREE.Mesh(_GEO.gStock,  woodMat); gStock.position.set(0, -0.008, 0.28);
-    gunGroup.add(new THREE.Mesh(_GEO.gBody, gunMat), gBarrel, gMag, gStock);
+    const gBarrel = new THREE.Mesh(_GEO.gBarrel, _MAT_GUN); gBarrel.position.set(0, 0.015, -0.31);
+    const gMag    = new THREE.Mesh(_GEO.gMag,    _MAT_GUN); gMag.position.set(0, -0.075, -0.02);
+    const gStock  = new THREE.Mesh(_GEO.gStock,  _MAT_WOOD); gStock.position.set(0, -0.008, 0.28);
+    gunGroup.add(new THREE.Mesh(_GEO.gBody, _MAT_GUN), gBarrel, gMag, gStock);
     gunGroup.position.set(0.32, 1.04, -0.16);
     gunGroup.rotation.set(0.32, 0, 0);
 
