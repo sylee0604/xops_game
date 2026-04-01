@@ -157,6 +157,19 @@ const MAP_REGISTRY = {
         onAllDead: onRescueAllDead,
         kiaSubtitle: () => 'K.I.A. — RESCUE FAILED',
     },
+    defuse: {
+        setup() {
+            buildDefuseMap(); spawnDefuseEnemies();
+            _resetToKnife();
+            player.pos.set(20, PLAYER_HEIGHT, 2);
+            player.yaw = Math.PI;
+        },
+        msg: 'MISSION 6 — DEFUSE  ▶ 3개의 폭탄을 90초 안에 해제하라', msgDur: 3000,
+        update: (dt) => updateDefuse(dt),
+        // 적 전멸만으로는 승리 아님 — 폭탄 해제가 승리 조건
+        onAllDead: null,
+        kiaSubtitle: () => 'K.I.A. — DEFUSE FAILED',
+    },
     training: {
         setup() {
             buildTrainingMap();

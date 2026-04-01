@@ -462,19 +462,19 @@ D. 의존성 명시화 (장기)
 | 맵 레지스트리 리팩토링 | game.js | ✅ |
 | 이벤트 버스 도입 | events.js (신규) | ✅ |
 | Material 공유로 draw call 감소 | enemies.js | ✅ |
-| 미션 5 RESCUE (인질구출) | maps/rescue.js (신규) | ⬜ 미착수 |
+| 미션 5 RESCUE (인질구출) | maps/rescue.js (신규) | ✅ |
 
-### Phase 3 — 고도화 (다음 작업)
+### Phase 3 — 고도화
 
-| 작업 | 파일 | 난이도 |
-|------|------|--------|
-| ES 모듈 전환 (IIFE → module) | 전체 | ★★★★ |
-| InstancedMesh 적용 | enemies.js | ★★★★ |
-| 절차적 텍스처 (CanvasTexture) | maps/*.js | ★★★ |
-| 폭탄 해제 미션 DEFUSE | maps/defuse.js (신규) | ★★★ |
-| 발소리 시스템 | audio.js, player.js | ★★☆ |
-| 탄흔(Bullet Decal) | particles.js, bullets.js | ✅ 이미 구현됨 |
-| 미션 5 RESCUE (인질구출) | maps/rescue.js (신규) | ★★★ |
+| 작업 | 파일 | 난이도 | 상태 |
+|------|------|--------|------|
+| ES 모듈 전환 (IIFE → module) | 전체 | ★★★★ | ✅ 클로저 방식으로 구현 (index.html type=module + new Function 클로저, window 노출 차단) |
+| InstancedMesh 적용 | enemies.js | ★★★★ | ⬜ 미착수 |
+| 절차적 텍스처 (CanvasTexture) | textures.js | ★★★ | ✅ 이미 구현됨 (concrete/floor/wood/metal/crate 5종) |
+| 폭탄 해제 미션 DEFUSE | maps/defuse.js (신규) | ★★★ | ✅ 구현 완료 (2026-04-01) |
+| 발소리 시스템 | audio.js, player.js | ★★☆ | ⬜ 보류 (마지막 구현 예정) |
+| 탄흔(Bullet Decal) | particles.js, bullets.js | — | ✅ 이미 구현됨 |
+| 미션 5 RESCUE (인질구출) | maps/rescue.js (신규) | ★★★ | ✅ 이미 구현됨 |
 
 ---
 
