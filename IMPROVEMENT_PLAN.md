@@ -442,38 +442,39 @@ D. 의존성 명시화 (장기)
 
 ## 우선순위 로드맵
 
-### Phase 1 — 즉시 체감 개선 (1~2주)
+### Phase 1 — 즉시 체감 개선 ✅ 완료
 
-| 작업 | 파일 | 난이도 |
-|------|------|--------|
-| 점수 시스템 + 미션 클리어 등급 | hud.js, game.js | ★★☆ |
-| 데미지 방향 인디케이터 | hud.js | ★☆☆ |
-| 동적 크로스헤어 | hud.js | ★☆☆ |
-| ADS 전환 lerp | player.js, weapons.js | ★★☆ |
-| 무기 밥(Bob) 애니메이션 | weapons.js | ★★☆ |
-| 헤드샷 판정 | enemies.js, bullets.js | ★★★ |
-| 파티클 이펙트 (총구/피격) | bullets.js + 신규 particles.js | ★★★ |
+| 작업 | 파일 | 상태 |
+|------|------|------|
+| 점수 시스템 + 미션 클리어 등급 | weapons.js, game.js | ✅ |
+| 데미지 방향 인디케이터 | hud.js, bullets.js, weapons.js | ✅ |
+| 동적 크로스헤어 | hud.js | ✅ |
+| ADS 전환 lerp | player.js, weapons.js | ✅ |
+| 무기 밥(Bob) 애니메이션 | weapons.js | ✅ |
+| 헤드샷 판정 | enemies.js, bullets.js | ✅ |
+| 파티클 이펙트 (총구/피격) | particles.js (신규) | ✅ |
 
-### Phase 2 — 콘텐츠 확장 (2~4주)
+### Phase 2 — 콘텐츠 확장 ✅ 완료
 
-| 작업 | 파일 | 난이도 |
-|------|------|--------|
-| 미션 5 RESCUE (인질구출) | maps/rescue.js (신규) | ★★★ |
-| 생존 웨이브 모드 | maps/survival.js (신규) | ★★☆ |
-| 맵 레지스트리 리팩토링 | game.js | ★★☆ |
-| 이벤트 버스 도입 | events.js (신규) | ★★☆ |
-| Material 공유로 draw call 감소 | enemies.js | ★★☆ |
+| 작업 | 파일 | 상태 |
+|------|------|------|
+| 생존 웨이브 모드 | maps/survival.js (신규) | ✅ |
+| 맵 레지스트리 리팩토링 | game.js | ✅ |
+| 이벤트 버스 도입 | events.js (신규) | ✅ |
+| Material 공유로 draw call 감소 | enemies.js | ✅ |
+| 미션 5 RESCUE (인질구출) | maps/rescue.js (신규) | ⬜ 미착수 |
 
-### Phase 3 — 고도화 (4주 이후)
+### Phase 3 — 고도화 (다음 작업)
 
 | 작업 | 파일 | 난이도 |
 |------|------|--------|
 | ES 모듈 전환 (IIFE → module) | 전체 | ★★★★ |
 | InstancedMesh 적용 | enemies.js | ★★★★ |
 | 절차적 텍스처 (CanvasTexture) | maps/*.js | ★★★ |
-| 폭탄 해제 미션 | maps/defuse.js (신규) | ★★★ |
+| 폭탄 해제 미션 DEFUSE | maps/defuse.js (신규) | ★★★ |
 | 발소리 시스템 | audio.js, player.js | ★★☆ |
 | 탄흔(Bullet Decal) | bullets.js | ★★★ |
+| 미션 5 RESCUE (인질구출) | maps/rescue.js (신규) | ★★★ |
 
 ---
 

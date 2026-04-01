@@ -145,6 +145,18 @@ const MAP_REGISTRY = {
         onAllDead: onSurvivalWaveClear,
         kiaSubtitle: () => `K.I.A. — REACHED WAVE ${survivalWave}`,
     },
+    rescue: {
+        setup() {
+            buildRescueMap(); spawnRescueEnemies();
+            _resetToKnife();
+            player.pos.set(15, PLAYER_HEIGHT, 2);
+            player.yaw = Math.PI;
+        },
+        msg: 'MISSION 5 — RESCUE  ▶ 발각 시 인질 처형. 조용히 제압하라', msgDur: 3000,
+        update: (dt) => updateRescue(dt),
+        onAllDead: onRescueAllDead,
+        kiaSubtitle: () => 'K.I.A. — RESCUE FAILED',
+    },
     training: {
         setup() {
             buildTrainingMap();
