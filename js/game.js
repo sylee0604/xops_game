@@ -41,8 +41,7 @@ function gameLoop() {
     missionTime = (Date.now() - missionStartTime) / 1000;
     updatePlayer(dt);
     if (enemiesEnabled) updateEnemies(dt);
-    if (currentMap === 'assault') updateAllies(dt);
-    if (currentMap === 'survival') updateSurvival(dt);
+    MAP_REGISTRY[currentMap]?.update?.(dt);
     updateBullets(dt);
     updateImpacts(dt);
     updatePickups();
@@ -64,6 +63,75 @@ function _resetToKnife() {
     player.currentWeapon = 2;
 }
 
+// =====================================================================
+// MAP REGISTRY — 맵 추가 시 이 객체에 항목 하나만 추가하면 됨
+// setup()   : 맵 빌드 + 플레이어 초기 세팅
+// update(dt): 매 프레임 호출 (없으면 생략)
+// msg / msgDur: 시작 메시지
+// =====================================================================
+const MAP_REGISTRY = {
+    combat: {
+        setup() {
+            buildMap(); buildLighting(); spawnEnemies(); spawnPickups();
+            _resetToKnife();
+            player.pos.set(CELL * 1.5, PLAYER_HEIGHT, CELL * 1.5);
+            player.yaw = Math.PI;
+        },
+        msg: 'MISSION 1 — COMPOUND  ▶ 적을 모두 제거하라', msgDur: 2500,
+    },
+    harbor: {
+        setup() {
+            buildHarborMap(); spawnHarborEnemies(); spawnHarborPickups();
+            _resetToKnife();
+            player.pos.set(28, PLAYER_HEIGHT, 1.5);
+            player.yaw = Math.PI;
+        },
+        msg: 'MISSION 2 — HARBOR  ▶ 항구를 장악하라', msgDur: 2500,
+    },
+    tunnel: {
+        setup() {
+            buildTunnelMap(); spawnTunnelZombies();
+            player.currentWeapon = 7; // M249
+            player.pos.set(5, PLAYER_HEIGHT, 1.5);
+            player.yaw = Math.PI;
+        },
+        msg: 'MISSION 3 — TUNNEL  ▶ 좀비를 제거하라', msgDur: 2500,
+    },
+    assault: {
+        setup() {
+            buildAssaultMap(); spawnAssaultEnemies(); spawnAssaultAllies(); spawnAssaultPickups();
+            _resetToKnife();
+            player.pos.set(19.5, PLAYER_HEIGHT, 2);
+            player.yaw = Math.PI;
+        },
+        msg: 'MISSION 4 — ASSAULT  ▶ 아군과 함께 적을 섬멸하라', msgDur: 2500,
+        update: (dt) => updateAllies(dt),
+    },
+    survival: {
+        setup() {
+            buildSurvivalMap();
+            TOTAL_ENEMIES = 0;
+            player.currentWeapon = 1; // AK-47
+            player.pos.set(20, PLAYER_HEIGHT, 20);
+            player.yaw = Math.PI;
+            document.getElementById('wave-display').style.display = 'block';
+            document.getElementById('kill-counter').textContent = 'KILLS: 0';
+        },
+        msg: 'SURVIVAL — 웨이브 시작까지 대기...', msgDur: 3000,
+        update: (dt) => updateSurvival(dt),
+    },
+    training: {
+        setup() {
+            buildTrainingMap();
+            enemiesEnabled = false;
+            player.currentWeapon = 1; // AK
+            player.pos.set(0, PLAYER_HEIGHT, 2);
+            player.yaw = Math.PI;
+        },
+        msg: 'TRAINING RANGE — G 버리기 / F 적ON/OFF', msgDur: 3000,
+    },
+};
+
 function startGame(mapType) {
     currentMap = mapType || 'combat';
     document.getElementById('overlay').style.display = 'none';
@@ -74,57 +142,9 @@ function startGame(mapType) {
     setupInput();
     getAudioCtx(); // 게임 시작 시 즉시 디코딩 시작 (첫 발사 전에 완료되도록)
 
-    if (currentMap === 'training') {
-        buildTrainingMap();
-        enemiesEnabled = false;
-        player.currentWeapon = 1; // AK
-        player.pos.set(0, PLAYER_HEIGHT, 2);
-        player.yaw = Math.PI;
-        showMessage('TRAINING RANGE — G 버리기 / F 적ON/OFF', 3000);
-    } else if (currentMap === 'harbor') {
-        buildHarborMap();
-        spawnHarborEnemies();
-        spawnHarborPickups();
-        _resetToKnife();
-        player.pos.set(28, PLAYER_HEIGHT, 1.5);
-        player.yaw = Math.PI;
-        showMessage('MISSION 2 — HARBOR  ▶ 항구를 장악하라', 2500);
-    } else if (currentMap === 'assault') {
-        buildAssaultMap();
-        spawnAssaultEnemies();
-        spawnAssaultAllies();
-        spawnAssaultPickups();
-        _resetToKnife();
-        player.pos.set(19.5, PLAYER_HEIGHT, 2);
-        player.yaw = Math.PI;
-        showMessage('MISSION 4 — ASSAULT  ▶ 아군과 함께 적을 섬멸하라', 2500);
-    } else if (currentMap === 'tunnel') {
-        buildTunnelMap();
-        spawnTunnelZombies();
-        player.currentWeapon = 7; // M249
-        // 터널 입구 — 첫 좀비(z=20)까지 17유닛, 음성감지 8유닛 밖
-        player.pos.set(5, PLAYER_HEIGHT, 1.5);
-        player.yaw = Math.PI;
-        showMessage('MISSION 3 — TUNNEL  ▶ 좀비를 제거하라', 2500);
-    } else if (currentMap === 'survival') {
-        buildSurvivalMap();
-        TOTAL_ENEMIES = 0; // 웨이브 스폰마다 누적
-        player.currentWeapon = 1; // AK-47
-        player.pos.set(20, PLAYER_HEIGHT, 20);
-        player.yaw = Math.PI;
-        document.getElementById('wave-display').style.display = 'block';
-        document.getElementById('kill-counter').textContent = 'KILLS: 0';
-        showMessage('SURVIVAL — 웨이브 시작까지 대기...', 3000);
-    } else {
-        buildMap();
-        buildLighting();
-        spawnEnemies();
-        spawnPickups();
-        _resetToKnife();
-        player.pos.set(CELL * 1.5, PLAYER_HEIGHT, CELL * 1.5);
-        player.yaw = Math.PI;
-        showMessage('MISSION 1 — COMPOUND  ▶ 적을 모두 제거하라', 2500);
-    }
+    const mapDef = MAP_REGISTRY[currentMap] ?? MAP_REGISTRY.combat;
+    mapDef.setup();
+    showMessage(mapDef.msg, mapDef.msgDur);
 
     // 점수 초기화
     kills            = 0;
