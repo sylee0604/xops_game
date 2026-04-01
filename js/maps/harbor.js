@@ -19,7 +19,7 @@ function buildHarborMap() {
     const W = 72, D = 90; // 항구 크기
 
     // 콘크리트 바닥 (야간)
-    const floorMat = new THREE.MeshLambertMaterial({ color: 0x2a2e30 });
+    const floorMat = new THREE.MeshLambertMaterial({ color: 0x505558, map: makeFloorTex('floor', W / 2, D / 2) });
     const floor = new THREE.Mesh(new THREE.PlaneGeometry(W, D), floorMat);
     floor.rotation.x = -Math.PI / 2;
     floor.position.set(W/2, 0, D/2);
@@ -45,7 +45,8 @@ function buildHarborMap() {
 
     // 컨테이너 배치 함수
     const CONT_COLORS = [0x5a1510, 0x0e3018, 0x102244, 0x4a2a08, 0x2e1840, 0x0e2828];
-    const CONT_MATS   = CONT_COLORS.map(c => new THREE.MeshLambertMaterial({ color: c }));
+    const _contTex    = makeTex('metal');
+    const CONT_MATS   = CONT_COLORS.map(c => new THREE.MeshLambertMaterial({ color: c, map: _contTex }));
     const contDarkMat = new THREE.MeshLambertMaterial({ color: 0x111111 });
     const contGeo     = new THREE.BoxGeometry(2.4, 2.5, 6.0);
     const contFrameGeo = new THREE.BoxGeometry(2.4+0.04, 2.5+0.04, 0.08);

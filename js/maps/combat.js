@@ -6,7 +6,10 @@
 
 function buildMap() {
     // Floor
-    const floorMat = new THREE.MeshLambertMaterial({ color: 0x404448 });
+    const floorMat = new THREE.MeshLambertMaterial({
+        color: 0x888892,
+        map: makeFloorTex('floor', MAP[0].length * CELL / 2, MAP.length * CELL / 2),
+    });
     const floorGeo = new THREE.PlaneGeometry(MAP[0].length * CELL, MAP.length * CELL);
     const floor = new THREE.Mesh(floorGeo, floorMat);
     floor.rotation.x = -Math.PI / 2;
@@ -15,7 +18,10 @@ function buildMap() {
     scene.add(floor);
 
     // Ceiling
-    const ceilMat = new THREE.MeshLambertMaterial({ color: 0x555a60 });
+    const ceilMat = new THREE.MeshLambertMaterial({
+        color: 0x606570,
+        map: makeFloorTex('concrete', MAP[0].length * CELL / 3, MAP.length * CELL / 3),
+    });
     const ceilGeo = new THREE.PlaneGeometry(MAP[0].length * CELL, MAP.length * CELL);
     const ceil = new THREE.Mesh(ceilGeo, ceilMat);
     ceil.rotation.x = Math.PI / 2;
@@ -23,7 +29,7 @@ function buildMap() {
     scene.add(ceil);
 
     // Walls — InstancedMesh으로 draw call 1개로 통합
-    const wallMat = new THREE.MeshLambertMaterial({ color: 0x6a7080 });
+    const wallMat = new THREE.MeshLambertMaterial({ color: 0x7a8090, map: makeTex('concrete') });
     const wallGeo = new THREE.BoxGeometry(CELL, WALL_H, CELL);
 
     let _wallCount = 0;
@@ -56,9 +62,10 @@ function buildMap() {
 
     // Crates
     const crateGeo = new THREE.BoxGeometry(1.1, 1.0, 1.1);
+    const _crateTex = makeTex('crate');
     for (const cp of CRATE_POS) {
         const hue = Math.random() * 0.05 + 0.06;
-        const crateMat = new THREE.MeshLambertMaterial({ color: new THREE.Color().setHSL(hue, 0.4, 0.25) });
+        const crateMat = new THREE.MeshLambertMaterial({ color: new THREE.Color().setHSL(hue, 0.35, 0.55), map: _crateTex });
         const mesh = new THREE.Mesh(crateGeo, crateMat);
         const x = cp.c * CELL + CELL / 2;
         const z = cp.r * CELL + CELL / 2;

@@ -13,9 +13,9 @@ function buildTunnelMap() {
     scene.add(muzzleLight);
 
     const TW = 10, TH = 5, TL = 140;
-    const concreteMat  = new THREE.MeshLambertMaterial({ color: 0x3a3a42 });
-    const ceilMat      = new THREE.MeshLambertMaterial({ color: 0x2a2a30 });
-    const wallMatL     = new THREE.MeshLambertMaterial({ color: 0x1a1a22 });
+    const concreteMat  = new THREE.MeshLambertMaterial({ color: 0x606068, map: makeFloorTex('floor',     TW / 2, TL / 2) });
+    const ceilMat      = new THREE.MeshLambertMaterial({ color: 0x484850, map: makeFloorTex('concrete',  TW / 3, TL / 3) });
+    const wallMatL     = new THREE.MeshLambertMaterial({ color: 0x383840, map: makeFloorTex('concrete',  1,      TL / 3) });
 
     // ── 바닥 / 천장 (단일 Plane) ──
     const floor = new THREE.Mesh(new THREE.PlaneGeometry(TW, TL), concreteMat);

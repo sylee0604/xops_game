@@ -8,6 +8,10 @@ js/events.js         GameEvents pub-sub 버스 (on/emit/off)
 js/state.js          scene·camera·renderer·clock, player{}, walls[], enemies[], allies[], bullets[], impacts[], pickups[], platforms[], _tv1/_tv2/_tv3
 js/audio.js          getAudioCtx(), playGunshot(idx), playEnemyGunshot(idx)
 js/physics.js        resolveWallCollision(pos,radius,feetY), segmentHitsSphere(p0,p1,center,radius)
+js/textures.js       절차적 텍스처 — makeTex(type), makeFloorTex(type,repX,repY)
+                     type: 'concrete'|'floor'|'wood'|'metal'|'crate'
+                     makeTex: 캐시 반환 (repeat=1,1) — 벽/오브젝트용
+                     makeFloorTex: clone+repeat 설정 반환 — 대형 바닥/천장용
 js/particles.js      파티클 풀 시스템 — updateBursts(dt), spawnMuzzleFlash(pos), spawnImpactSpark(pos,color)
 js/pickups.js        buildPickupGroup(idx), createPickup(x,z,wIdx,ammo,deskY), updatePickups(), dropWeapon()
 js/enemies.js        canSeePlayer(e), spawnEnemies(), spawnEnemyAt(x,z,wpList,isZombie,floorY=0)
@@ -34,7 +38,7 @@ js/game.js           initThree(), gameLoop(), MAP_REGISTRY{}, _showMissionComple
 
 ## SCRIPT LOAD ORDER (index.html — 변경 금지)
 ```
-three.js CDN → constants → events → state → audio → physics → particles
+three.js CDN → constants → events → state → audio → physics → textures → particles
 → pickups → enemies → bullets → weapons → hud → player
 → maps/combat → maps/harbor → maps/tunnel → maps/training → maps/assault → maps/survival → game
 ```

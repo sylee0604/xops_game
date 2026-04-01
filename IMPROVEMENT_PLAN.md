@@ -473,7 +473,7 @@ D. 의존성 명시화 (장기)
 | 절차적 텍스처 (CanvasTexture) | maps/*.js | ★★★ |
 | 폭탄 해제 미션 DEFUSE | maps/defuse.js (신규) | ★★★ |
 | 발소리 시스템 | audio.js, player.js | ★★☆ |
-| 탄흔(Bullet Decal) | bullets.js | ★★★ |
+| 탄흔(Bullet Decal) | particles.js, bullets.js | ✅ 이미 구현됨 |
 | 미션 5 RESCUE (인질구출) | maps/rescue.js (신규) | ★★★ |
 
 ---

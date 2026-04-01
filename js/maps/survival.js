@@ -87,7 +87,7 @@ function buildSurvivalMap() {
     const W = _SV_W, D = _SV_D;
 
     // 바닥
-    const floorMat = new THREE.MeshLambertMaterial({ color: 0x1e1e1e });
+    const floorMat = new THREE.MeshLambertMaterial({ color: 0x484848, map: makeFloorTex('floor', (W + 8) / 2, (D + 8) / 2) });
     const floor = new THREE.Mesh(new THREE.PlaneGeometry(W + 8, D + 8), floorMat);
     floor.rotation.x = -Math.PI / 2;
     floor.position.set(W / 2, 0, D / 2);
@@ -96,7 +96,7 @@ function buildSurvivalMap() {
     addPlatform(-4, W + 4, -4, D + 4, 0);
 
     // 외벽 (가시 + 충돌)
-    const outerMat = new THREE.MeshLambertMaterial({ color: 0x303030 });
+    const outerMat = new THREE.MeshLambertMaterial({ color: 0x585858, map: makeTex('metal') });
     const wallH = 6;
     for (const [cx, cz, ww, wd] of [
         [W / 2, -0.6,  W + 3, 1.2],  // 북

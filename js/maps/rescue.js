@@ -53,8 +53,8 @@ function buildRescueMap() {
     _pl(25, 31, 0.9, 14);   // 우측 방
 
     const WH = WALL_H, WY = WALL_H / 2;
-    const wallMat  = new THREE.MeshPhongMaterial({ color: 0x484858 });
-    const floorMat = new THREE.MeshPhongMaterial({ color: 0x383842 });
+    const wallMat  = new THREE.MeshLambertMaterial({ color: 0x686878, map: makeTex('concrete') });
+    const floorMat = new THREE.MeshLambertMaterial({ color: 0x808088, map: makeFloorTex('floor', _RES_W / 2, _RES_D / 2) });
 
     // 바닥
     const floor = new THREE.Mesh(new THREE.BoxGeometry(30, 0.2, 35), floorMat);
