@@ -41,7 +41,7 @@ function _spawnSurvivalWave() {
     survivalWave++;
 
     // 이전 웨이브에서 남은 시체 즉시 정리
-    for (const e of enemies) scene.remove(e.mesh);
+    EnemyRenderer.reset();
     enemies.length = 0;
 
     const count     = 3 + survivalWave * 2;  // w1=5, w2=7, w3=9, ...

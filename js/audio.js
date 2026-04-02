@@ -72,3 +72,51 @@ function playEnemyGunshot(idx) {
     const v = USER_SHOT_VAR[idx];
     if (v) _playUserShot(idx, v, 0.5, 1.3); // 볼륨 50%, 피치 1.3배 높게
 }
+
+// ── 발소리 합성 (Web Audio 절차적) ───────────────────────────────────────────
+// 짧은 노이즈 버스트 + 로우패스 필터 → 발이 바닥에 닿는 탁한 '쿵' 소리
+function _playStep(volume, pitchMul) {
+    const ctx = getAudioCtx();
+    if (!ctx || ctx.state === 'suspended') return;
+
+    const dur = 0.09;
+    const sr  = ctx.sampleRate;
+    const len = Math.ceil(sr * dur);
+    const buf = ctx.createBuffer(1, len, sr);
+    const d   = buf.getChannelData(0);
+
+    for (let i = 0; i < len; i++) {
+        // 지수 감쇠 × 화이트 노이즈
+        d[i] = (Math.random() * 2 - 1) * Math.exp(-i / (len * 0.12));
+    }
+
+    const src  = ctx.createBufferSource();
+    src.buffer = buf;
+    src.playbackRate.value = pitchMul;
+
+    const lpf = ctx.createBiquadFilter();
+    lpf.type  = 'lowpass';
+    lpf.frequency.value = 170;
+
+    const gain = ctx.createGain();
+    gain.gain.value = volume;
+
+    src.connect(lpf); lpf.connect(gain); gain.connect(_masterOut);
+    src.start();
+}
+
+// 플레이어 발소리 (항상 일정 볼륨, 앉으면 작게)
+function playPlayerStep(crouching) {
+    _playStep(
+        crouching ? 0.12 : 0.30,
+        0.88 + Math.random() * 0.24  // 피치 살짝 랜덤 (발 왼/오른 변화)
+    );
+}
+
+// 적 발소리 (거리 기반 볼륨, 15유닛 이상은 무음)
+function playEnemyStep(distSq) {
+    const MAX_SQ = 15 * 15;
+    if (distSq >= MAX_SQ) return;
+    const vol = (1 - distSq / MAX_SQ) * 0.18;
+    _playStep(vol, 0.82 + Math.random() * 0.18);
+}

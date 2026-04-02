@@ -75,62 +75,14 @@ function canSeePlayer(e) {
 
 function spawnEnemies() {
     for (const ed of ENEMY_DATA) {
-        const skinMat   = new THREE.MeshPhongMaterial({ color: 0xb07040 });
-        const unifMat   = new THREE.MeshPhongMaterial({ color: 0x2d5016 });
-        const vestMat   = new THREE.MeshPhongMaterial({ color: 0x1e3a0f });
-        const helmetMat = new THREE.MeshPhongMaterial({ color: 0x1a2e0a });
-        const bootMat   = new THREE.MeshPhongMaterial({ color: 0x111111 });
-        const eyeMat    = new THREE.MeshBasicMaterial({ color: 0x111111 });
-
-        const group = new THREE.Group();
-
-        const lLeg = new THREE.Mesh(_GEO.leg,  unifMat); lLeg.position.set(-0.10, 0.30, 0);
-        const rLeg = new THREE.Mesh(_GEO.leg,  unifMat); rLeg.position.set( 0.10, 0.30, 0);
-        const lBoot = new THREE.Mesh(_GEO.boot, bootMat); lBoot.position.set(-0.10, 0.045, 0.02);
-        const rBoot = new THREE.Mesh(_GEO.boot, bootMat); rBoot.position.set( 0.10, 0.045, 0.02);
-        const torso = new THREE.Mesh(_GEO.torso, unifMat); torso.position.y = 0.92;
-        const vest  = new THREE.Mesh(_GEO.vest,  vestMat); vest.position.set(0, 0.94, 0.01);
-        const lUA = new THREE.Mesh(_GEO.uArm, unifMat); lUA.position.set(-0.25, 1.10, 0);
-        const lLA = new THREE.Mesh(_GEO.lArm, unifMat); lLA.position.set(-0.25, 0.84, 0);
-        const rUA = new THREE.Mesh(_GEO.uArm, unifMat); rUA.position.set( 0.25, 1.10, 0);
-        const rLA = new THREE.Mesh(_GEO.lArm, unifMat); rLA.position.set( 0.25, 0.84, -0.08); rLA.rotation.x = -0.35;
-        const neck = new THREE.Mesh(_GEO.neck, skinMat); neck.position.y = 1.32;
-        const head = new THREE.Mesh(_GEO.head, skinMat); head.position.y = 1.50;
-        const helm = new THREE.Mesh(_GEO.helm, helmetMat); helm.position.set(0, 1.60, 0.01);
-        const brim = new THREE.Mesh(_GEO.brim, helmetMat); brim.position.set(0, 1.53, -0.145);
-        const lEye = new THREE.Mesh(_GEO.eye, eyeMat); lEye.position.set(-0.052, 1.50, -0.115);
-        const rEye = new THREE.Mesh(_GEO.eye, eyeMat); rEye.position.set( 0.052, 1.50, -0.115);
-
-        const gunGroup = new THREE.Group();
-        const gBarrel = new THREE.Mesh(_GEO.gBarrel, _MAT_GUN); gBarrel.position.set(0, 0.015, -0.31);
-        const gMag1   = new THREE.Mesh(_GEO.gMag,    _MAT_GUN); gMag1.position.set(0, -0.075, -0.02);
-        const gMag2   = new THREE.Mesh(_GEO.gMag2,   _MAT_GUN); gMag2.position.set(0, -0.13, -0.045); gMag2.rotation.x = 0.35;
-        const gStock  = new THREE.Mesh(_GEO.gStock,  _MAT_WOOD); gStock.position.set(0, -0.008, 0.28);
-        const gHG     = new THREE.Mesh(_GEO.gHG,     _MAT_WOOD); gHG.position.set(0, -0.015, -0.16);
-        gunGroup.add(new THREE.Mesh(_GEO.gBody, _MAT_GUN), gBarrel, gMag1, gMag2, gStock, gHG);
-        gunGroup.position.set(0.32, 1.04, -0.16);
-        gunGroup.rotation.set(0.32, 0, 0);
-
-        group.add(
-            lLeg, rLeg, lBoot, rBoot,
-            torso, vest,
-            lUA, lLA, rUA, rLA,
-            neck, head, helm, brim,
-            lEye, rEye,
-            gunGroup
-        );
-
         const x = ed.c * CELL + CELL / 2;
         const z = ed.r * CELL + CELL / 2;
-        group.position.set(x, 0, z);
-        scene.add(group);
-
         const wp1 = new THREE.Vector3(ed.wp[0].c * CELL + CELL/2, 0, ed.wp[0].r * CELL + CELL/2);
         const wp2 = new THREE.Vector3(ed.wp[1].c * CELL + CELL/2, 0, ed.wp[1].r * CELL + CELL/2);
+        const iIdx = EnemyRenderer.allocate(ITYPE.SOLDIER);
 
         enemies.push({
-            mesh: group,
-            bodyMesh: vest,
+            instanceIdx: iIdx, instanceType: ITYPE.SOLDIER,
             pos: new THREE.Vector3(x, 0, z),
             health: 100,
             state: STATE.PATROL,
@@ -161,73 +113,15 @@ function spawnEnemies() {
             attackTarget: null,
             isZombie: false,
             baseY: 0,
+            stepTimer: Math.random() * 0.5,
         });
     }
 }
 
 // 임의 월드좌표로 적 생성 (그리드 독립)
 function spawnEnemyAt(x, z, wpList, isZombie, floorY = 0) {
-    const skinMat   = new THREE.MeshPhongMaterial({ color: isZombie ? 0x7a9a60 : 0xb07040 });
-    const clothMat  = new THREE.MeshPhongMaterial({ color: isZombie ? 0x3a2a1a : 0x2d5016 });
-    const vestMat   = new THREE.MeshPhongMaterial({ color: 0x1e3a0f });
-    const helmetMat = new THREE.MeshPhongMaterial({ color: 0x1a2e0a });
-    const bootMat   = new THREE.MeshPhongMaterial({ color: 0x111111 });
-
-    const group = new THREE.Group();
-
-    const lLeg = new THREE.Mesh(_GEO.leg,  clothMat); lLeg.position.set(-0.10, 0.30, 0);
-    const rLeg = new THREE.Mesh(_GEO.leg,  clothMat); rLeg.position.set( 0.10, 0.30, 0);
-    const lBoot = new THREE.Mesh(_GEO.boot, bootMat); lBoot.position.set(-0.10, 0.045, 0.02);
-    const rBoot = new THREE.Mesh(_GEO.boot, bootMat); rBoot.position.set( 0.10, 0.045, 0.02);
-    const torso = new THREE.Mesh(_GEO.torso, clothMat); torso.position.y = 0.92;
-    const vest  = new THREE.Mesh(_GEO.vest,  isZombie ? clothMat : vestMat); vest.position.set(0, 0.94, 0.01);
-    const lUA = new THREE.Mesh(_GEO.uArm, clothMat); lUA.position.set(-0.25, 1.10, 0);
-    const lLA = new THREE.Mesh(_GEO.lArm, clothMat); lLA.position.set(-0.25, 0.84, 0);
-    const rUA = new THREE.Mesh(_GEO.uArm, clothMat); rUA.position.set( 0.25, 1.10, 0);
-    const rLA = new THREE.Mesh(_GEO.lArm, clothMat); rLA.position.set( 0.25, 0.84, -0.08);
-    rLA.rotation.x = -0.35;
-    // 좀비: 팔을 앞으로 뻗음
-    if (isZombie) {
-        lUA.position.set(-0.22, 1.15, -0.12); lUA.rotation.x = -0.9;
-        rUA.position.set( 0.22, 1.15, -0.12); rUA.rotation.x = -0.9;
-        lLA.position.set(-0.22, 0.90, -0.30); lLA.rotation.x = -0.9;
-        rLA.position.set( 0.22, 0.90, -0.30); rLA.rotation.x = -0.9;
-    }
-    const neck = new THREE.Mesh(_GEO.neck, skinMat); neck.position.y = 1.32;
-    const head = new THREE.Mesh(_GEO.head, skinMat); head.position.y = 1.50;
-    if (isZombie) { head.position.set(0, 1.45, -0.06); head.rotation.x = 0.35; }
-    const helm = new THREE.Mesh(_GEO.helm, helmetMat); helm.position.set(0, 1.60, 0.01);
-    const brim = new THREE.Mesh(_GEO.brim, helmetMat); brim.position.set(0, 1.53, -0.145);
-
-    // 눈 (좀비: 빨간 눈, 병사: 검은 눈)
-    const eyeMat = new THREE.MeshBasicMaterial({ color: isZombie ? 0xcc0000 : 0x111111 });
-    const lEye = new THREE.Mesh(_GEO.eye, eyeMat);
-    const rEye = new THREE.Mesh(_GEO.eye, eyeMat);
-    if (isZombie) {
-        lEye.position.set(-0.052, 1.44, -0.12);
-        rEye.position.set( 0.052, 1.44, -0.12);
-    } else {
-        lEye.position.set(-0.052, 1.50, -0.115);
-        rEye.position.set( 0.052, 1.50, -0.115);
-    }
-
-    const toAdd = [lLeg, rLeg, lBoot, rBoot, torso, vest, lUA, lLA, rUA, rLA, neck, head, lEye, rEye];
-    if (!isZombie) toAdd.push(helm, brim);
-
-    if (!isZombie) {
-        const gunGroup = new THREE.Group();
-        const gBarrel = new THREE.Mesh(_GEO.gBarrel, _MAT_GUN); gBarrel.position.set(0, 0.015, -0.31);
-        const gMag    = new THREE.Mesh(_GEO.gMag,    _MAT_GUN); gMag.position.set(0, -0.075, -0.02);
-        const gStock  = new THREE.Mesh(_GEO.gStock,  _MAT_WOOD); gStock.position.set(0, -0.008, 0.28);
-        gunGroup.add(new THREE.Mesh(_GEO.gBody, _MAT_GUN), gBarrel, gMag, gStock);
-        gunGroup.position.set(0.32, 1.04, -0.16);
-        gunGroup.rotation.set(0.32, 0, 0);
-        toAdd.push(gunGroup);
-    }
-
-    for (const m of toAdd) group.add(m);
-    group.position.set(x, 0, z);
-    scene.add(group);
+    const iType = isZombie ? ITYPE.ZOMBIE : ITYPE.SOLDIER;
+    const iIdx  = EnemyRenderer.allocate(iType);
 
     const wps = (wpList || []).map(p => new THREE.Vector3(p.x, 0, p.z));
     if (wps.length < 2) {
@@ -235,7 +129,7 @@ function spawnEnemyAt(x, z, wpList, isZombie, floorY = 0) {
     }
 
     enemies.push({
-        mesh: group, bodyMesh: vest,
+        instanceIdx: iIdx, instanceType: iType,
         pos: new THREE.Vector3(x, 0, z),
         baseY: floorY,
         health: isZombie ? 192 : 100,
@@ -261,6 +155,7 @@ function spawnEnemyAt(x, z, wpList, isZombie, floorY = 0) {
         shootCount: 0,
         attackTarget: null,
         isZombie,
+        stepTimer: Math.random() * 0.5,
     });
 }
 
@@ -325,7 +220,6 @@ function updateEnemies(dt) {
             if (e.state === STATE.SCAN) {
                 e.scanTimer -= dt;
                 e.facing = e.scanStartFacing + (1 - e.scanTimer / e.scanDuration) * e.scanTotalAngle;
-                e.mesh.rotation.y = e.facing;
                 if (e.scanTimer <= 0) {
                     if (e.scanToAttack) {
                         e.state = STATE.ATTACK;
@@ -431,7 +325,6 @@ function updateEnemies(dt) {
                 while (diff > Math.PI)  diff -= Math.PI * 2;
                 while (diff < -Math.PI) diff += Math.PI * 2;
                 e.facing += diff * Math.min(1, dt * turnSpeed);
-                e.mesh.rotation.y = e.facing;
                 if (moveSpeed > 0 && Math.abs(diff) < Math.PI / 18) {
                     e.pos.x += nx * moveSpeed * dt;
                     e.pos.z += nz * moveSpeed * dt;
@@ -442,9 +335,18 @@ function updateEnemies(dt) {
         // Wall push
         resolveWallCollision(e.pos, 0.35);
 
-        // Walk bob
+        // Walk bob (walkPhase → EnemyRenderer.updateAll에서 사용)
         e.walkPhase += dt * moveSpeed * 3;
-        e.mesh.position.set(e.pos.x, e.baseY + Math.sin(e.walkPhase) * 0.03, e.pos.z);
+
+        // 적 발소리 (거리 기반, AI 감지와 무관)
+        if (moveSpeed > 0.5) {
+            e.stepTimer -= dt;
+            if (e.stepTimer <= 0) {
+                e.stepTimer = 0.40 + Math.random() * 0.10;
+                const _sdx = e.pos.x - player.pos.x, _sdz = e.pos.z - player.pos.z;
+                playEnemyStep(_sdx * _sdx + _sdz * _sdz);
+            }
+        }
     }
 }
 
@@ -520,69 +422,29 @@ function allyShoot(ally, targetEnemy) {
 function hitAlly(ally, damage) {
     if (ally.state === STATE.DEAD) return;
     ally.health -= damage;
-    ally.bodyMesh.material.color.set(0xff2200);
-    setTimeout(() => {
-        if (ally.state !== STATE.DEAD) ally.bodyMesh.material.color.set(0x3a4e6a);
-    }, 80);
+    EnemyRenderer.flashHit(ally.instanceIdx, ITYPE.ALLY);
     if (ally.health <= 0) killAlly(ally);
 }
 
 function killAlly(ally) {
     ally.state = STATE.DEAD;
-    ally.mesh.rotation.z = Math.PI / 2;
-    ally.mesh.position.y = -0.3;
-    ally.mesh.children.forEach(c => { if (c.material) c.material.color.set(0x111111); });
+    EnemyRenderer.setDeadPose(ally.instanceIdx, ITYPE.ALLY, ally.pos, ally.facing, 0);
 }
 
 function spawnAllyAt(x, z) {
-    const skinMat   = new THREE.MeshPhongMaterial({ color: 0xb07040 });
-    const clothMat  = new THREE.MeshPhongMaterial({ color: 0x2a3a5a });
-    const vestMat   = new THREE.MeshPhongMaterial({ color: 0x3a4e6a });
-    const helmetMat = new THREE.MeshPhongMaterial({ color: 0x1a2a4a });
-    const bootMat   = new THREE.MeshPhongMaterial({ color: 0x111111 });
-
-    const group = new THREE.Group();
-    const lLeg = new THREE.Mesh(_GEO.leg,  clothMat); lLeg.position.set(-0.10, 0.30, 0);
-    const rLeg = new THREE.Mesh(_GEO.leg,  clothMat); rLeg.position.set( 0.10, 0.30, 0);
-    const lBoot = new THREE.Mesh(_GEO.boot, bootMat); lBoot.position.set(-0.10, 0.045, 0.02);
-    const rBoot = new THREE.Mesh(_GEO.boot, bootMat); rBoot.position.set( 0.10, 0.045, 0.02);
-    const torso = new THREE.Mesh(_GEO.torso, clothMat); torso.position.y = 0.92;
-    const vest  = new THREE.Mesh(_GEO.vest,  vestMat); vest.position.set(0, 0.94, 0.01);
-    const lUA = new THREE.Mesh(_GEO.uArm, clothMat); lUA.position.set(-0.25, 1.10, 0);
-    const lLA = new THREE.Mesh(_GEO.lArm, clothMat); lLA.position.set(-0.25, 0.84, 0);
-    const rUA = new THREE.Mesh(_GEO.uArm, clothMat); rUA.position.set( 0.25, 1.10, 0);
-    const rLA = new THREE.Mesh(_GEO.lArm, clothMat); rLA.position.set( 0.25, 0.84, -0.08); rLA.rotation.x = -0.35;
-    const neck = new THREE.Mesh(_GEO.neck, skinMat); neck.position.y = 1.32;
-    const head = new THREE.Mesh(_GEO.head, skinMat); head.position.y = 1.50;
-    const helm = new THREE.Mesh(_GEO.helm, helmetMat); helm.position.set(0, 1.60, 0.01);
-    const brim = new THREE.Mesh(_GEO.brim, helmetMat); brim.position.set(0, 1.53, -0.145);
-    const eyeMat = new THREE.MeshBasicMaterial({ color: 0x111111 });
-    const lEye = new THREE.Mesh(_GEO.eye, eyeMat); lEye.position.set(-0.052, 1.50, -0.115);
-    const rEye = new THREE.Mesh(_GEO.eye, eyeMat); rEye.position.set( 0.052, 1.50, -0.115);
-    const gunGroup = new THREE.Group();
-    const gBarrel = new THREE.Mesh(_GEO.gBarrel, _MAT_GUN); gBarrel.position.set(0, 0.015, -0.31);
-    const gMag    = new THREE.Mesh(_GEO.gMag,    _MAT_GUN); gMag.position.set(0, -0.075, -0.02);
-    const gStock  = new THREE.Mesh(_GEO.gStock,  _MAT_WOOD); gStock.position.set(0, -0.008, 0.28);
-    gunGroup.add(new THREE.Mesh(_GEO.gBody, _MAT_GUN), gBarrel, gMag, gStock);
-    gunGroup.position.set(0.32, 1.04, -0.16);
-    gunGroup.rotation.set(0.32, 0, 0);
-
-    group.add(lLeg, rLeg, lBoot, rBoot, torso, vest, lUA, lLA, rUA, rLA,
-              neck, head, helm, brim, lEye, rEye, gunGroup);
-    group.position.set(x, 0, z);
-    scene.add(group);
+    const iIdx = EnemyRenderer.allocate(ITYPE.ALLY);
 
     allies.push({
-        mesh: group, bodyMesh: vest,
+        instanceIdx: iIdx, instanceType: ITYPE.ALLY,
         pos: new THREE.Vector3(x, 0, z),
         health: 100,
         state: STATE.PATROL,
         waypoints: (() => {
             const gx = _nearestGapX(x);
             return [
-                new THREE.Vector3(gx, 0, 21),  // 아군 모래주머니 앞
-                new THREE.Vector3(gx, 0, 28),  // 갭 통과 후
-                new THREE.Vector3(gx, 0, 45),  // 목표 지점 (여기서 정지)
+                new THREE.Vector3(gx, 0, 21),
+                new THREE.Vector3(gx, 0, 28),
+                new THREE.Vector3(gx, 0, 45),
             ];
         })(),
         wpIndex: 0,
@@ -637,7 +499,6 @@ function updateAllies(dt) {
                 while (diff >  Math.PI) diff -= Math.PI*2;
                 while (diff < -Math.PI) diff += Math.PI*2;
                 ally.facing += diff * Math.min(1, dt * 5);
-                ally.mesh.rotation.y = ally.facing;
                 ally.pos.x += nx * moveSpeed * 0.55 * dt;
                 ally.pos.z += nz * moveSpeed * 0.55 * dt;
             }
@@ -653,7 +514,6 @@ function updateAllies(dt) {
                 while (diff >  Math.PI) diff -= Math.PI*2;
                 while (diff < -Math.PI) diff += Math.PI*2;
                 ally.facing += diff * Math.min(1, dt * 9);
-                ally.mesh.rotation.y = ally.facing;
             }
 
             if (ally.reactDelay > 0) ally.reactDelay -= dt;
@@ -686,18 +546,13 @@ function updateAllies(dt) {
 
         resolveWallCollision(ally.pos, 0.35);
         ally.walkPhase += dt * moveSpeed * 3;
-        ally.mesh.position.set(ally.pos.x, Math.sin(ally.walkPhase) * 0.03, ally.pos.z);
     }
 }
 
 function hitEnemy(e, damage, fromAlly = false) {
     if (e.state === STATE.DEAD) return;
     e.health -= damage;
-    // Flash
-    e.bodyMesh.material.color.set(0xff2200);
-    setTimeout(() => {
-        if (e.state !== STATE.DEAD) e.bodyMesh.material.color.set(e.isZombie ? 0x3a2a1a : 0x1e3a0f);
-    }, 80);
+    EnemyRenderer.flashHit(e.instanceIdx, e.instanceType);
 
     // 피격 시: ATTACK 상태가 아니면 SCAN -> ATTACK
     e.alertTimer = 12;
@@ -720,11 +575,7 @@ function hitEnemy(e, damage, fromAlly = false) {
 function killEnemy(e, fromAlly = false) {
     e.state = STATE.DEAD;
     kills++;
-    e.mesh.rotation.z = Math.PI / 2;
-    e.mesh.position.y = e.baseY - 0.3;
-    e.mesh.children.forEach(c => {
-        if (c.material) c.material.color.set(0x111111);
-    });
+    EnemyRenderer.setDeadPose(e.instanceIdx, e.instanceType, e.pos, e.facing, e.baseY ?? 0);
     document.getElementById('kill-counter').textContent = `KILLS: ${kills} / ${TOTAL_ENEMIES}`;
     if (!fromAlly) showMessage('ENEMY DOWN');
 
@@ -734,6 +585,8 @@ function killEnemy(e, fromAlly = false) {
     setTimeout(() => {
         const idx = enemies.indexOf(e);
         if (idx !== -1) enemies.splice(idx, 1);
+        EnemyRenderer.free(e.instanceIdx, e.instanceType);
+        e.instanceIdx = -1;
     }, 3000);
 
     const alive = enemies.filter(en => en.state !== STATE.DEAD).length;

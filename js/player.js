@@ -126,6 +126,17 @@ function updatePlayer(dt) {
     if (moving && player.onGround) {
         walkPhase += dt * (stealth ? 5 : 9);
     }
+
+    // 플레이어 발소리
+    if (moving && player.onGround) {
+        _stepTimer -= dt;
+        if (_stepTimer <= 0) {
+            _stepTimer = crouching ? 0.60 : 0.38;
+            playPlayerStep(crouching);
+        }
+    } else {
+        _stepTimer = 0; // 멈추면 즉시 리셋 (다시 움직이면 바로 한 발)
+    }
     const bob = moving ? Math.sin(walkPhase) * (stealth ? 0.012 : 0.025) : 0;
     const tilt = moving ? Math.sin(walkPhase * 0.5) * 0.008 : 0;
 
@@ -226,6 +237,8 @@ function updatePlayer(dt) {
     if (crouching) { sb.textContent = stealth ? '[ STEALTH ]' : '[ CROUCH ]'; sb.className = 'stealth'; }
     else { sb.textContent = ''; sb.className = ''; }
 }
+
+let _stepTimer = 0; // 다음 발소리까지 남은 시간
 
 function setupInput() {
     document.addEventListener('keydown', e => {

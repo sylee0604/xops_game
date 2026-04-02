@@ -41,6 +41,7 @@ function gameLoop() {
     missionTime = (Date.now() - missionStartTime) / 1000;
     updatePlayer(dt);
     if (enemiesEnabled) updateEnemies(dt);
+    EnemyRenderer.updateAll(enemies, allies);
     MAP_REGISTRY[currentMap]?.update?.(dt);
     updateBullets(dt);
     updateImpacts(dt);
@@ -188,6 +189,7 @@ function startGame(mapType) {
     document.getElementById('hud').style.display = 'block';
 
     initThree();
+    EnemyRenderer.init(scene);
     createWeaponModels();
     setupInput();
     getAudioCtx(); // 게임 시작 시 즉시 디코딩 시작 (첫 발사 전에 완료되도록)
