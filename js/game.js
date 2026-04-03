@@ -150,7 +150,7 @@ const MAP_REGISTRY = {
         setup() {
             buildRescueMap(); spawnRescueEnemies();
             _resetToKnife();
-            player.pos.set(15, PLAYER_HEIGHT, 2);
+            player.pos.set(15, PLAYER_HEIGHT, -3);
             player.yaw = Math.PI;
         },
         msg: 'MISSION 5 — RESCUE  ▶ 발각 시 인질 처형. 조용히 제압하라', msgDur: 3000,
@@ -170,6 +170,21 @@ const MAP_REGISTRY = {
         // 적 전멸만으로는 승리 아님 — 폭탄 해제가 승리 조건
         onAllDead: null,
         kiaSubtitle: () => 'K.I.A. — DEFUSE FAILED',
+    },
+    escort: {
+        setup() {
+            buildEscortMap(); spawnEscortEnemies(); spawnEscortVip();
+            _resetToKnife();
+            player.pos.set(10, PLAYER_HEIGHT, 2);
+            player.yaw = Math.PI;
+            document.getElementById('wave-display').style.display = 'block';
+            document.getElementById('wave-display').style.color = '#4fc';
+            document.getElementById('wave-display').textContent = 'VIP HP: 100';
+        },
+        msg: 'MISSION 7 — ESCORT  ▶ VIP를 출구까지 호위하라', msgDur: 3000,
+        update: (dt) => updateEscort(dt),
+        onAllDead: null,  // 적 전멸만으로는 승리 아님 — VIP가 출구 도달해야 함
+        kiaSubtitle: () => 'K.I.A. — ESCORT FAILED',
     },
     training: {
         setup() {

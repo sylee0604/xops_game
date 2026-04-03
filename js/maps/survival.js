@@ -152,4 +152,32 @@ function buildSurvivalMap() {
     addCover(20.0, 23.5, 1.2, 3.5);
     addCover(16.5, 20.0, 3.5, 1.2);
     addCover(23.5, 20.0, 3.5, 1.2);
+
+    // 중앙 스폰 보호 구역 (h=4 벽, 12×12 방, 각 면 2유닛 갭)
+    // 적이 가장자리에 스폰되어도 초기 라인오브사이트가 차단됨
+    const _swH = 4;
+    const _swMat = new THREE.MeshLambertMaterial({ color: 0x505060, map: makeTex('concrete') });
+    function _addSpawnWall(cx, cz, ww, wd) {
+        const m = new THREE.Mesh(new THREE.BoxGeometry(ww, _swH, wd), _swMat);
+        m.position.set(cx, _swH / 2, cz);
+        m.castShadow = true; m.receiveShadow = true;
+        scene.add(m);
+        walls.push({ box: new THREE.Box3(
+            new THREE.Vector3(cx - ww / 2, 0, cz - wd / 2),
+            new THREE.Vector3(cx + ww / 2, _swH, cz + wd / 2)
+        )});
+        wallMeshList.push(m);
+    }
+    // 북벽 (z=26): x=14~19, x=21~26, 갭 x=19~21
+    _addSpawnWall(16.5, 26, 5, 0.4);
+    _addSpawnWall(23.5, 26, 5, 0.4);
+    // 남벽 (z=14): 동일
+    _addSpawnWall(16.5, 14, 5, 0.4);
+    _addSpawnWall(23.5, 14, 5, 0.4);
+    // 서벽 (x=14): z=14~19, z=21~26, 갭 z=19~21
+    _addSpawnWall(14, 16.5, 0.4, 5);
+    _addSpawnWall(14, 23.5, 0.4, 5);
+    // 동벽 (x=26): 동일
+    _addSpawnWall(26, 16.5, 0.4, 5);
+    _addSpawnWall(26, 23.5, 0.4, 5);
 }

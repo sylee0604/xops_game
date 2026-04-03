@@ -133,6 +133,12 @@ function buildDefuseMap() {
     addWall(30, 27, 1.0, 0.8);
     addWall(36, 33, 0.8, 1.0);
 
+    // ── 남측 안전구역 분리벽 (z=6) — 플레이어 시작점(z≈2)과 메인홀(z=8+) 분리 ──
+    // 출입구: x=10~15 (서쪽 갭), x=25~30 (동쪽 갭)
+    addWall( 5,  6, 10, 0.4);   // x=0~10
+    addWall(20,  6, 10, 0.4);   // x=15~25
+    addWall(35,  6, 10, 0.4);   // x=30~40
+
     // ── 폭탄 생성 ──
     _bombs        = [];
     _defuseFailed = false;
@@ -150,10 +156,10 @@ function spawnDefuseEnemies() {
     TOTAL_ENEMIES = 9;
     document.getElementById('kill-counter').textContent = _defuseHUDText();
 
-    // 메인 홀 순찰병 3명
-    spawnEnemyAt( 7,  8, [{ x:  4, z:  4 }, { x: 11, z: 18 }], false);
-    spawnEnemyAt(20, 11, [{ x: 17, z:  4 }, { x: 23, z: 18 }], false);
-    spawnEnemyAt(33,  8, [{ x: 29, z:  4 }, { x: 37, z: 18 }], false);
+    // 메인 홀 순찰병 3명 (z=8 이남 순찰 없음 — 남측 안전구역 분리벽 안쪽 접근 방지)
+    spawnEnemyAt( 7, 13, [{ x:  4, z:  9 }, { x: 12, z: 19 }], false);
+    spawnEnemyAt(20, 14, [{ x: 16, z:  9 }, { x: 24, z: 19 }], false);
+    spawnEnemyAt(33, 13, [{ x: 28, z:  9 }, { x: 37, z: 19 }], false);
 
     // Bomb A 경비 2명
     spawnEnemyAt( 4, 27, [{ x:  2, z: 23 }, { x:  8, z: 46 }], false);
