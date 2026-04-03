@@ -64,6 +64,18 @@ function _resetToKnife() {
     player.currentWeapon = 2;
 }
 
+// 칼 초기화 후 지정 무기 2개 지급 (idx: weapon index in WEAPON_DEFS)
+function _startWithWeapons(idx0, idx1) {
+    _resetToKnife();
+    [idx0, idx1].forEach((idx, slot) => {
+        const def = WEAPON_DEFS[idx];
+        const w = player.weapons[idx];
+        w.ammo = def.ammo; w.reserve = def.reserve; w.dropped = false;
+        player.carrySlots[slot] = idx;
+    });
+    player.currentWeapon = idx0;
+}
+
 // 미션 성공 화면 (표준 맵 공통)
 function _showMissionComplete() {
     setTimeout(() => {
@@ -149,7 +161,7 @@ const MAP_REGISTRY = {
     rescue: {
         setup() {
             buildRescueMap(); spawnRescueEnemies();
-            _resetToKnife();
+            _startWithWeapons(5, 4); // MP5, M14 EBR
             player.pos.set(15, PLAYER_HEIGHT, -3);
             player.yaw = Math.PI;
         },
@@ -161,7 +173,7 @@ const MAP_REGISTRY = {
     defuse: {
         setup() {
             buildDefuseMap(); spawnDefuseEnemies();
-            _resetToKnife();
+            _startWithWeapons(1, 3); // AK-47, AWP
             player.pos.set(20, PLAYER_HEIGHT, 2);
             player.yaw = Math.PI;
         },
@@ -174,7 +186,7 @@ const MAP_REGISTRY = {
     escort: {
         setup() {
             buildEscortMap(); spawnEscortEnemies(); spawnEscortVip();
-            _resetToKnife();
+            _startWithWeapons(6, 5); // SPAS-12, MP5
             player.pos.set(10, PLAYER_HEIGHT, 2);
             player.yaw = Math.PI;
             document.getElementById('wave-display').style.display = 'block';
