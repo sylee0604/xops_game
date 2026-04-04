@@ -13,7 +13,7 @@ let _escortFailed   = false;
 let _escortWon      = false;
 const _EXIT_Z       = 47;     // VIP가 이 z에 도달하면 성공
 const _VIP_PAUSE_ENEMY_DIST = 9;   // 이 거리 내 생존 적이 있으면 VIP 정지
-const _VIP_PAUSE_PLAYER_DIST = 18; // 플레이어가 이것보다 멀면 VIP 정지(기다림)
+const _VIP_PAUSE_PLAYER_DIST = 26; // 플레이어가 이것보다 멀면 VIP 정지(기다림)
 
 // VIP 체력바 DOM (wave-display 재활용)
 function _vipHUD() {
@@ -303,6 +303,7 @@ function updateEscort(dt) {
         }
         _escortVip.walkPhase += dt * 4;
         _escortVip.state = STATE.PATROL;
+        resolveWallCollision(_escortVip.pos, 0.35);
     } else {
         // 정지 상태 — facing을 가장 가까운 적 쪽으로 (경계)
         if (closestEnemyDist < _VIP_PAUSE_ENEMY_DIST) {

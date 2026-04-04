@@ -41,6 +41,9 @@ function _spawnSurvivalWave() {
     survivalWave++;
 
     // 이전 웨이브에서 남은 시체 즉시 정리
+    // instanceIdx를 -1로 먼저 무효화해야 killEnemy 3s 타이머의 free() 호출이
+    // reset() 이후 새로 할당된 인스턴스를 잘못 해제하지 않음
+    for (const e of enemies) e.instanceIdx = -1;
     EnemyRenderer.reset();
     enemies.length = 0;
 
@@ -71,6 +74,11 @@ function _svSpawnPoint() {
 }
 
 function buildSurvivalMap() {
+    // 재시작 시 웨이브 상태 초기화
+    survivalWave  = 0;
+    _svWaveActive = false;
+    _svNextWaveIn = 3.5;
+
     scene.background = new THREE.Color(0x0d1117);
     scene.fog = new THREE.FogExp2(0x0d1117, 0.007);
 

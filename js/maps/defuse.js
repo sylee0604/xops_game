@@ -63,6 +63,15 @@ function _makeDefuseBomb(x, z) {
 // 맵: x=[0,40], z=[0,50]  /  플레이어 시작: x=20, z=2
 // ─────────────────────────────────────────────
 function buildDefuseMap() {
+    // 재시작 시 이전 폭탄 오브젝트 씬에서 제거
+    for (const b of _bombs) {
+        scene.remove(b.group);
+        scene.remove(b.light);
+    }
+    _bombs        = [];
+    _defuseFailed = false;
+    _defuseWin    = false;
+
     scene.background = new THREE.Color(0x252030);
     scene.fog = new THREE.FogExp2(0x252030, 0.018);
 
@@ -140,10 +149,6 @@ function buildDefuseMap() {
     addWall(35,  6, 10, 0.4);   // x=30~40
 
     // ── 폭탄 생성 ──
-    _bombs        = [];
-    _defuseFailed = false;
-    _defuseWin    = false;
-
     _bombs.push(_makeDefuseBomb( 7, 44));   // Bomb A (좌측)
     _bombs.push(_makeDefuseBomb(20, 46));   // Bomb B (중앙)
     _bombs.push(_makeDefuseBomb(33, 44));   // Bomb C (우측)
@@ -180,7 +185,7 @@ function spawnDefuseEnemies() {
 function _defuseHUDText() {
     const labels = ['A', 'B', 'C'];
     const parts  = _bombs.map((b, i) => {
-        if (b.defused) return `[A${labels[i]}:SAFE]`;
+        if (b.defused) return `[${labels[i]}:SAFE]`;
         const t = Math.ceil(b.timer);
         return t < 30 ? `[!${labels[i]}:${t}s!]` : `[${labels[i]}:${t}s]`;
     });
@@ -282,7 +287,7 @@ function _triggerBombExplosion(idx) {
 
     // 파티클 스파크 스폰
     for (let i = 0; i < 10; i++) {
-        spawnImpactSpark(
+        spawnImpact(
             new THREE.Vector3(
                 b.pos.x + (Math.random() - 0.5) * 2.5,
                 0.6 + Math.random() * 0.8,

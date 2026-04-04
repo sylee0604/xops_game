@@ -171,6 +171,7 @@ function updateEnemies(dt) {
             _eyePos.set(e.pos.x, 1.45, e.pos.z);
             for (const ally of allies) {
                 if (ally.state === STATE.DEAD) continue;
+                if (ally.isVip) continue; // VIP는 적 타겟에서 제외 (escort 미션)
                 const ax = ally.pos.x - e.pos.x, az = ally.pos.z - e.pos.z;
                 const adist = Math.sqrt(ax*ax + az*az);
                 if (adist > e.sightRange) continue;

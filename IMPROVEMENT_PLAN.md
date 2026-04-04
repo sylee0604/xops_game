@@ -489,4 +489,6 @@ D. 의존성 명시화 (장기)
 **Phase 2 완료**: 생존모드·맵 레지스트리·이벤트 버스·Material 공유·인질구출
 **Phase 3 완료**: ES모듈(클로저)·InstancedMesh·절차적텍스처·DEFUSE·발소리
 
-**차기 개선 후보**: 미션 순차 잠금해제 UI, ESCORT 미션, 파괴 가능 오브젝트, 수평 반동 패턴.
+**Phase 4 완료 (2026-04-03)**: Mission 7 ESCORT (VIP 호위), DEFUSE/SURVIVAL/RESCUE 밸런스 픽스
+
+**차기 개선 후보**: 미션 순차 잠금해제 UI, 파괴 가능 오브젝트, 수평 반동 패턴, 난이도 선택.

@@ -174,7 +174,7 @@ const MAP_REGISTRY = {
         setup() {
             buildDefuseMap(); spawnDefuseEnemies();
             _startWithWeapons(1, 3); // AK-47, AWP
-            player.pos.set(20, PLAYER_HEIGHT, 2);
+            player.pos.set(12, PLAYER_HEIGHT, 2); // x=10~15 출입구 정면
             player.yaw = Math.PI;
         },
         msg: 'MISSION 6 — DEFUSE  ▶ 3개의 폭탄을 90초 안에 해제하라', msgDur: 3000,
